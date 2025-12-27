@@ -29,6 +29,8 @@ export function FocusMode({
   onComplete, 
   onUpdateTime,
   onIncrementPomodoro,
+  isMinimized,
+  onMinimize,
   darkMode,
   onNavigateToPlan
 }: FocusModeProps) {
@@ -42,6 +44,7 @@ export function FocusMode({
   const [isBreak, setIsBreak] = useState(false);
   const [isResting, setIsResting] = useState(false);
   const [restTime, setRestTime] = useState(5 * 60); // 5 minutes default rest
+  const [isMinimalMode, setIsMinimalMode] = useState(false);
 
   useEffect(() => {
     setTimeElapsed(0);
@@ -111,7 +114,13 @@ export function FocusMode({
     if (!task) return;
     
     setIsSlashing(true);
+    setIsSlashing(true);
     setIsRunning(false);
+    
+    // Exit Focus Mode
+    setIsMinimalMode(false);
+    onMinimize(false);
+    window.electron.setFocusMode(false);
     
     // Confetti celebration! 🎉
     const duration = 3000;
@@ -179,6 +188,11 @@ export function FocusMode({
     setIsRunning(false);
     setTimeElapsed(0);
     setShowTimer(false);
+    // Exit Focus Mode
+    setIsMinimalMode(false);
+    onMinimize(false);
+    window.electron.setFocusMode(false);
+
     if (isPomodoroMode) {
       setPomodoroTime(25 * 60);
       setIsBreak(false);
@@ -249,6 +263,60 @@ export function FocusMode({
 
   return (
     <>
+      {isMinimalMode ? (
+        <div 
+          className="fixed inset-0 flex items-center justify-between px-4"
+          style={{ 
+            backgroundColor: darkMode ? '#000000' : '#ffffff',
+            WebkitAppRegion: 'drag' 
+          }}
+        >
+          {/* Timer - Left */}
+          <div className="flex items-center gap-2" style={{ WebkitAppRegion: 'no-drag' }}>
+            {Object.entries(formatTime(isPomodoroMode ? pomodoroTime : timeElapsed)).map(([unit, value], idx) => (
+              <div key={unit} className="flex items-center">
+                {idx > 0 && <span className={`text-sm ${darkMode ? 'text-white/40' : 'text-black/40'}`}>:</span>}
+                <span className={`text-xl font-mono tabular-nums ${darkMode ? 'text-white' : 'text-black'}`}>
+                  {value}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Task Title - Center */}
+          <div className="flex-1 text-center truncate px-4">
+             <span className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-black'}`}>
+               {task.title}
+             </span>
+          </div>
+
+          {/* Controls - Right */}
+          <div className="flex items-center gap-2" style={{ WebkitAppRegion: 'no-drag' }}>
+            <motion.button
+              onClick={handleStop}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className={`p-2 rounded-lg ${
+                darkMode ? 'hover:bg-white/10 text-white' : 'hover:bg-black/10 text-black'
+              }`}
+            >
+              <Square className="w-4 h-4" />
+            </motion.button>
+            <motion.button
+              onClick={handleComplete}
+              disabled={isSlashing}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className={`p-2 rounded-lg ${
+                darkMode ? 'hover:bg-white/10 text-white' : 'hover:bg-black/10 text-black'
+              }`}
+            >
+              <CheckCircle2 className="w-4 h-4" />
+            </motion.button>
+          </div>
+        </div>
+      ) : (
+      <>
       {/* Next Task Dialog */}
       <AlertDialog open={showNextDialog} onOpenChange={setShowNextDialog}>
         <AlertDialogContent className={`max-w-md ${
@@ -547,6 +615,9 @@ export function FocusMode({
                 onClick={() => {
                   setShowTimer(true);
                   setIsRunning(true);
+                  setIsMinimalMode(true);
+                  onMinimize(true);
+                  window.electron.setFocusMode(true);
                 }}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -803,37 +874,16 @@ export function FocusMode({
                         : 'bg-black/[0.02] border-black/[0.08] text-black hover:bg-black/[0.06]'
                     }`}
                   >
-                    <CheckCircle2 className="w-5 h-5" />
+                    <CheckCircle2 className="w-6 h-6" />
                   </motion.button>
-                </div>
-              </div>
-
-              {/* Stats */}
-              <div className="flex items-center justify-center gap-12 mt-8">
-                <div className="text-center">
-                  <div className={`text-2xl mb-1 ${
-                    darkMode ? 'text-white/90' : 'text-black/90'
-                  }`}>{completedToday}</div>
-                  <div className={`text-[9px] uppercase tracking-[0.15em] ${
-                    darkMode ? 'text-white/25' : 'text-black/25'
-                  }`}>Done</div>
-                </div>
-                <div className={`w-px h-8 ${
-                  darkMode ? 'bg-white/[0.08]' : 'bg-black/[0.08]'
-                }`} />
-                <div className="text-center">
-                  <div className={`text-2xl mb-1 ${
-                    darkMode ? 'text-white/90' : 'text-black/90'
-                  }`}>{totalTasks}</div>
-                  <div className={`text-[9px] uppercase tracking-[0.15em] ${
-                    darkMode ? 'text-white/25' : 'text-black/25'
-                  }`}>Left</div>
                 </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
+      </>
+      )}
     </>
   );
 }

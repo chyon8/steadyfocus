@@ -1,7 +1,6 @@
-import { projectId, publicAnonKey } from './supabase/info';
 import type { Task, ThemeName } from '../App';
 
-const API_BASE_URL = `https://${projectId}.supabase.co/functions/v1/make-server-fe1bf059`;
+const API_BASE_URL = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/make-server-fe1bf059`;
 
 let accessToken: string | null = null;
 
@@ -12,7 +11,7 @@ export function setAccessToken(token: string | null) {
 function getHeaders() {
   return {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${accessToken || publicAnonKey}`,
+    'Authorization': `Bearer ${accessToken || import.meta.env.VITE_SUPABASE_ANON_KEY}`,
   };
 }
 
