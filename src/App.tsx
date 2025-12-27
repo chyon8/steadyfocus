@@ -572,9 +572,10 @@ export default function App() {
               WebkitBackdropFilter: 'blur(20px)',
               backgroundColor: darkMode ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.8)',
               borderBottom: darkMode ? '1px solid rgba(255, 255, 255, 0.06)' : '1px solid rgba(0, 0, 0, 0.06)',
-            }}
+              WebkitAppRegion: 'drag',
+            } as React.CSSProperties}
           />
-          <div className="relative max-w-[1400px] mx-auto px-12 py-8">
+          <div className="relative max-w-[1400px] mx-auto px-12 py-8" style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}>
             <div className="flex items-center justify-between">
               {/* Logo */}
               <motion.button
@@ -582,6 +583,7 @@ export default function App() {
                 className="flex items-center gap-2 group"
                 whileHover={{ x: 2 }}
                 transition={{ type: "spring", stiffness: 500, damping: 40 }}
+                style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
               >
                 <div className={`w-6 h-6 rounded-md flex items-center justify-center ${
                   darkMode ? 'bg-white' : 'bg-black'
@@ -593,7 +595,7 @@ export default function App() {
               </motion.button>
               
               {/* Center Navigation */}
-              <nav className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-1">
+              <nav className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-1" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
                 {[
                   { id: 'focus', label: 'Focus', key: '1' },
                   { id: 'list', label: 'Plan', key: '2' },
@@ -630,7 +632,7 @@ export default function App() {
               </nav>
               
               {/* Theme Toggle */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
                 <motion.button
                   onClick={handleLogout}
                   className={`w-6 h-6 rounded-md flex items-center justify-center transition-colors ${

@@ -70,13 +70,13 @@ app.whenReady().then(() => {
       // CRITICAL: Remove minimum size constraints BEFORE resizing
       mainWindow.setMinimumSize(focusWidth, focusHeight);
 
-      // Use setBounds to set both size AND position
+      // Use setBounds to set both size AND position with smooth animation
       mainWindow.setBounds({
         x: focusX,
         y: focusY,
         width: focusWidth,
         height: focusHeight,
-      });
+      }, true); // Enable animation for smooth transition
 
       // Make window float on top
       mainWindow.setAlwaysOnTop(true, 'floating');
@@ -100,7 +100,7 @@ app.whenReady().then(() => {
         console.log('Restoring bounds:', originalBounds);
         // Restore min size before restoring bounds
         mainWindow.setMinimumSize(800, 600);
-        mainWindow.setBounds(originalBounds);
+        mainWindow.setBounds(originalBounds, true); // Enable animation for smooth transition
       }
 
       // Disable always on top

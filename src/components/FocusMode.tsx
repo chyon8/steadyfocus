@@ -268,11 +268,10 @@ export function FocusMode({
           className="fixed inset-0 flex items-center justify-between px-4"
           style={{ 
             backgroundColor: darkMode ? '#000000' : '#ffffff',
-            WebkitAppRegion: 'drag' 
           }}
         >
           {/* Timer - Left */}
-          <div className="flex items-center gap-2" style={{ WebkitAppRegion: 'no-drag' }}>
+          <div className="flex items-center gap-2">
             {Object.entries(formatTime(isPomodoroMode ? pomodoroTime : timeElapsed)).map(([unit, value], idx) => (
               <div key={unit} className="flex items-center">
                 {idx > 0 && <span className={`text-sm ${darkMode ? 'text-white/40' : 'text-black/40'}`}>:</span>}
@@ -283,15 +282,18 @@ export function FocusMode({
             ))}
           </div>
 
-          {/* Task Title - Center */}
-          <div className="flex-1 text-center truncate px-4">
+          {/* Task Title - Center (Draggable Area) */}
+          <div 
+            className="flex-1 text-center truncate px-4 cursor-move"
+            style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+          >
              <span className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-black'}`}>
                {task.title}
              </span>
           </div>
 
           {/* Controls - Right */}
-          <div className="flex items-center gap-2" style={{ WebkitAppRegion: 'no-drag' }}>
+          <div className="flex items-center gap-2">
             <motion.button
               onClick={handleStop}
               whileHover={{ scale: 1.05 }}
