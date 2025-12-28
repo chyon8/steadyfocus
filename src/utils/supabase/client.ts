@@ -18,7 +18,7 @@ export interface AuthResponse {
 // Sign up with email and password
 export async function signUp(email: string, password: string, name?: string): Promise<AuthResponse> {
   // First create the user via our server endpoint
-  const response = await fetch(`${supabaseUrl}/functions/v1/make-server-fe1bf059/auth/signup`, {
+  const response = await fetch(`${supabaseUrl}/functions/v1/server/auth/signup`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

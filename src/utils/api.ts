@@ -1,6 +1,6 @@
 import type { Task, ThemeName } from '../App';
 
-const API_BASE_URL = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/make-server-fe1bf059`;
+const API_BASE_URL = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/server`;
 
 let accessToken: string | null = null;
 

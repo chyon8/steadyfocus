@@ -225,10 +225,21 @@ export default function App() {
     if (!authResponse || isLoading) return; // Don't sync if not authenticated or during initial load
     
     const syncTasks = async () => {
+      // Always save to localStorage as backup/fallback first
+      localStorage.setItem('steady-tasks', JSON.stringify(tasks));
+
+      // Check for pending tasks (tasks with temporary IDs, usually Date.now() which is 13 chars)
+      // UUIDs are 36 chars. If we have a short ID, it means creation is in progress.
+      // In this case, we SKIP bulk update to prevent overwriting the server creation.
+      const hasPendingTask = tasks.some(t => t.id.length < 20);
+      
+      if (hasPendingTask) {
+        console.log('Skipping server sync due to pending task creation (preventing race condition)');
+        return;
+      }
+
       try {
         await tasksApi.bulkUpdate(tasks);
-        // Also save to localStorage as backup
-        localStorage.setItem('steady-tasks', JSON.stringify(tasks));
       } catch (error: any) {
         console.error('Failed to sync tasks to Supabase:', error);
         
@@ -238,9 +249,6 @@ export default function App() {
           handleLogout();
           return;
         }
-        
-        // Save to localStorage as fallback
-        localStorage.setItem('steady-tasks', JSON.stringify(tasks));
       }
     };
     
