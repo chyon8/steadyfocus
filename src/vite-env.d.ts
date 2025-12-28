@@ -10,7 +10,7 @@ declare global {
         chrome: string;
         electron: string;
       };
-      setFocusMode: (enable: boolean) => void;
+      setFocusMode: (enable: boolean, minimized?: boolean) => void;
     };
   }
 }

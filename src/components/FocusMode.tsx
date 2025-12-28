@@ -45,6 +45,53 @@ export function FocusMode({
   const [isResting, setIsResting] = useState(false);
   const [restTime, setRestTime] = useState(5 * 60); // 5 minutes default rest
   const [isMinimalMode, setIsMinimalMode] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Responsive styles calculation
+  const getResponsiveStyles = () => {
+    if (windowWidth < 500) {
+      return {
+        timerSize: 'text-[48px]',
+        titleSize: 'text-xl',
+        padding: 'p-6',
+        buttonSize: 'w-16 h-16',
+        iconSize: 'w-6 h-6',
+        smallButtonSize: 'w-12 h-12',
+        gap: 'gap-4',
+        labelSize: 'text-[10px]'
+      };
+    } else if (windowWidth < 650) {
+      return {
+        timerSize: 'text-[72px]',
+        titleSize: 'text-2xl',
+        padding: 'p-8',
+        buttonSize: 'w-18 h-18',
+        iconSize: 'w-7 h-7',
+        smallButtonSize: 'w-13 h-13',
+        gap: 'gap-6',
+        labelSize: 'text-[10px]'
+      };
+    } else {
+      return {
+        timerSize: 'text-[96px]',
+        titleSize: 'text-3xl',
+        padding: 'p-12',
+        buttonSize: 'w-20 h-20',
+        iconSize: 'w-8 h-8',
+        smallButtonSize: 'w-14 h-14',
+        gap: 'gap-8',
+        labelSize: 'text-xs'
+      };
+    }
+  };
+
+  const styles = getResponsiveStyles();
 
   useEffect(() => {
     setTimeElapsed(task?.timeSpent || 0);
@@ -120,7 +167,8 @@ export function FocusMode({
     // Exit Focus Mode
     setIsMinimalMode(false);
     onMinimize(false);
-    window.electron.setFocusMode(false);
+    // Explicitly pass false for minimized to restore normal window behavior
+    window.electron.setFocusMode(false, false);
     
     // Confetti celebration! 🎉
     const duration = 3000;
@@ -193,7 +241,8 @@ export function FocusMode({
     // Exit Focus Mode
     setIsMinimalMode(false);
     onMinimize(false);
-    window.electron.setFocusMode(false);
+    // Explicitly pass false for minimized to allow resizing again
+    window.electron.setFocusMode(false, false);
 
     // Don't reset Pomodoro state to allow resuming
   };
@@ -264,7 +313,7 @@ export function FocusMode({
     <>
       {isMinimalMode ? (
         <div 
-          className="fixed inset-0 flex items-center justify-between px-4"
+          className="fixed inset-0 flex items-center justify-between px-4 select-none"
           style={{ 
             backgroundColor: darkMode ? '#000000' : '#ffffff',
           }}
@@ -281,18 +330,29 @@ export function FocusMode({
             ))}
           </div>
 
+
           {/* Task Title - Center (Draggable Area) */}
-          <div 
-            className="flex-1 text-center truncate px-4 cursor-move"
-            style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
-          >
-             <span className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-black'}`}>
-               {task.title}
-             </span>
-          </div>
+          {windowWidth > 350 && (
+            <div 
+              className="flex-1 text-center truncate px-2 mx-2 cursor-move"
+              style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+            >
+               <span className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-black'}`}>
+                 {task.title}
+               </span>
+            </div>
+          )}
+          
+          {/* Drag Area Placeholder for small screens */}
+          {windowWidth <= 350 && (
+            <div 
+              className="flex-1 h-full cursor-move"
+              style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+            />
+          )}
 
           {/* Controls - Right */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
             <motion.button
               onClick={handleStop}
               whileHover={{ scale: 1.05 }}
@@ -631,9 +691,10 @@ export function FocusMode({
                 onClick={() => {
                   setShowTimer(true);
                   setIsRunning(true);
-                  setIsMinimalMode(true);
+                   setIsMinimalMode(true);
                   onMinimize(true);
-                  window.electron.setFocusMode(true);
+                  // Pass true/true to indicate enabled focus mode AND minimized (thin bar) mode
+                  window.electron.setFocusMode(true, true);
                 }}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -683,15 +744,17 @@ export function FocusMode({
                 duration: 0.8, 
                 ease: [0.25, 0.1, 0.25, 1],
               }}
-              className="w-full max-w-[800px]"
+              className="w-full h-full flex items-center justify-center"
             >
-              <div className={`relative p-12 rounded-3xl border ${
-                darkMode
-                  ? 'bg-white/[0.02] border-white/[0.08]'
-                  : 'bg-black/[0.01] border-black/[0.08]'
-              }`}>
-                {/* Pomodoro Mode Toggle */}
-                <div className="absolute top-6 left-6 flex items-center gap-3">
+              <div 
+                className={`relative ${styles.padding} rounded-3xl border w-full max-w-full h-full flex flex-col justify-center ${
+                  darkMode
+                    ? 'bg-white/[0.02] border-white/[0.08]'
+                    : 'bg-black/[0.01] border-black/[0.08]'
+                }`}
+              >
+                {/* Pomodoro Mode Toggle - Repositioned for small screens */}
+                <div className="absolute top-4 left-4 flex items-center gap-2">
                   <button
                     onClick={() => {
                       setIsPomodoroMode(!isPomodoroMode);
@@ -758,9 +821,8 @@ export function FocusMode({
                   </div>
                 </div>
 
-                {/* Task Title */}
                 <motion.h1 
-                  className={`text-3xl text-center mb-3 mt-8 ${
+                  className={`${styles.titleSize} text-center mb-2 mt-6 truncate px-4 ${
                     darkMode ? 'text-white' : 'text-black'
                   }`}
                   animate={isSlashing ? {
@@ -774,11 +836,11 @@ export function FocusMode({
 
                 {/* Notes */}
                 {task.notes && (
-                  <div className={`flex items-center justify-center gap-2 mb-6 text-sm ${
+                  <div className={`flex items-center justify-center gap-2 mb-4 text-sm ${
                     darkMode ? 'text-white/40' : 'text-black/40'
                   }`}>
                     <StickyNote className="w-3.5 h-3.5" />
-                    <span>{task.notes}</span>
+                    <span className="truncate max-w-[200px]">{task.notes}</span>
                   </div>
                 )}
 
@@ -798,18 +860,18 @@ export function FocusMode({
                 )}
 
                 {/* Timer Display */}
-                <div className="mb-12">
-                  <div className="flex items-center justify-center gap-3 mb-4">
+                <div className="mb-8">
+                  <div className="flex items-center justify-center gap-3 mb-2">
                     {Object.entries(formatTime(isPomodoroMode ? pomodoroTime : timeElapsed)).map(([unit, value], idx) => (
                       <div key={unit} className="flex items-center">
                         {idx > 0 && (
-                          <span className={`text-6xl mx-2 ${
+                          <span className={`mx-2 ${styles.timerSize.replace('text-', 'text-base sm:text-lg md:text-xl lg:text-2xl ').split(' ').pop() || 'text-4xl'} ${
                             darkMode ? 'text-white/20' : 'text-black/20'
                           }`}>:</span>
                         )}
                         <div className="text-center">
                           <motion.div 
-                            className={`text-[96px] leading-none tabular-nums ${
+                            className={`${styles.timerSize} leading-none tabular-nums ${
                               darkMode ? 'text-white' : 'text-black'
                             }`}
                             style={{ 
@@ -828,18 +890,18 @@ export function FocusMode({
                     ))}
                   </div>
                   
-                  <div className="flex items-center justify-center gap-8">
-                    <span className={`text-xs uppercase tracking-[0.15em] ${
+                  <div className={`flex items-center justify-center ${styles.gap}`}>
+                    <span className={`${styles.labelSize} uppercase tracking-[0.15em] ${
                       darkMode ? 'text-white/30' : 'text-black/30'
                     }`}>
                       hours
                     </span>
-                    <span className={`text-xs uppercase tracking-[0.15em] ${
+                    <span className={`${styles.labelSize} uppercase tracking-[0.15em] ${
                       darkMode ? 'text-white/30' : 'text-black/30'
                     }`}>
                       minutes
                     </span>
-                    <span className={`text-xs uppercase tracking-[0.15em] ${
+                    <span className={`${styles.labelSize} uppercase tracking-[0.15em] ${
                       darkMode ? 'text-white/30' : 'text-black/30'
                     }`}>
                       seconds
@@ -853,7 +915,7 @@ export function FocusMode({
                     onClick={handleStop}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className={`w-14 h-14 rounded-2xl flex items-center justify-center border transition-colors ${
+                    className={`${styles.smallButtonSize} rounded-2xl flex items-center justify-center border transition-colors ${
                       darkMode
                         ? 'bg-white/[0.04] border-white/[0.1] text-white hover:bg-white/[0.08]'
                         : 'bg-black/[0.02] border-black/[0.08] text-black hover:bg-black/[0.06]'
@@ -866,16 +928,16 @@ export function FocusMode({
                     onClick={() => setIsRunning(!isRunning)}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className={`w-20 h-20 rounded-3xl flex items-center justify-center transition-all ${
+                    className={`${styles.buttonSize} rounded-3xl flex items-center justify-center transition-all ${
                       darkMode
                         ? 'bg-white text-black hover:bg-white/95'
                         : 'bg-black text-white hover:bg-black/95'
                     }`}
                   >
                     {isRunning ? (
-                      <Pause className="w-8 h-8" fill="currentColor" />
+                      <Pause className={styles.iconSize} fill="currentColor" />
                     ) : (
-                      <Play className="w-8 h-8 ml-1" fill="currentColor" />
+                      <Play className={`${styles.iconSize} ml-1`} fill="currentColor" />
                     )}
                   </motion.button>
                   
@@ -884,7 +946,7 @@ export function FocusMode({
                     disabled={isSlashing}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className={`w-14 h-14 rounded-2xl flex items-center justify-center border transition-colors disabled:opacity-50 ${
+                    className={`${styles.smallButtonSize} rounded-2xl flex items-center justify-center border transition-colors disabled:opacity-50 ${
                       darkMode
                         ? 'bg-white/[0.04] border-white/[0.1] text-white hover:bg-white/[0.08]'
                         : 'bg-black/[0.02] border-black/[0.08] text-black hover:bg-black/[0.06]'

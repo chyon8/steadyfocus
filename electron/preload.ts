@@ -9,5 +9,5 @@ contextBridge.exposeInMainWorld('electron', {
     chrome: process.versions.chrome,
     electron: process.versions.electron,
   },
-  setFocusMode: (enable: boolean) => ipcRenderer.send('set-focus-mode', enable),
+  setFocusMode: (enable: boolean, minimized?: boolean) => ipcRenderer.send('set-focus-mode', enable, minimized),
 });
