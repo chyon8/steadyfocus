@@ -215,8 +215,7 @@ export function FocusMode({
 
   const handleContinue = () => {
     setShowNextDialog(false);
-    setIsRunning(true);
-    setShowTimer(true);
+    // Return to Up Next screen without auto-starting
   };
 
   const handleRest = () => {
@@ -228,8 +227,7 @@ export function FocusMode({
   const handleBackToWork = () => {
     setIsResting(false);
     setRestTime(5 * 60);
-    setShowTimer(true);
-    setIsRunning(true);
+    // Return to Up Next screen without auto-starting
   };
 
   const handleStop = () => {
@@ -579,7 +577,7 @@ export function FocusMode({
                 </p>
               </div>
             </motion.div>
-          ) : !showTimer ? (
+          ) : (
             /* Task List View */
             <motion.div
               key="list"
@@ -719,242 +717,6 @@ export function FocusMode({
                 darkMode ? 'text-white/30' : 'text-black/30'
               }`}>
                 {totalTasks - 2 > 0 && `+${totalTasks - 2} more task${totalTasks - 2 !== 1 ? 's' : ''}`}
-              </div>
-            </motion.div>
-          ) : (
-            /* Timer View */
-            <motion.div
-              key="timer"
-              initial={{ 
-                opacity: 0, 
-                scale: 0.96,
-                filter: 'blur(4px)',
-              }}
-              animate={{ 
-                opacity: 1, 
-                scale: 1,
-                filter: 'blur(0px)',
-              }}
-              exit={{ 
-                opacity: 0, 
-                scale: 0.96,
-                filter: 'blur(4px)',
-              }}
-              transition={{ 
-                duration: 0.8, 
-                ease: [0.25, 0.1, 0.25, 1],
-              }}
-              className="w-full h-full flex items-center justify-center"
-            >
-              <div 
-                className={`relative ${styles.padding} rounded-3xl border w-full max-w-full h-full flex flex-col justify-center ${
-                  darkMode
-                    ? 'bg-white/[0.02] border-white/[0.08]'
-                    : 'bg-black/[0.01] border-black/[0.08]'
-                }`}
-              >
-                {/* Pomodoro Mode Toggle - Repositioned for small screens */}
-                <div className="absolute top-4 left-4 flex items-center gap-2">
-                  <button
-                    onClick={() => {
-                      setIsPomodoroMode(!isPomodoroMode);
-                      if (!isPomodoroMode) {
-                        setPomodoroTime(25 * 60);
-                        setIsBreak(false);
-                      }
-                      setIsRunning(false);
-                    }}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-all ${
-                      isPomodoroMode
-                        ? darkMode
-                          ? 'bg-white/[0.08] border-white/[0.15] text-white'
-                          : 'bg-black/[0.06] border-black/[0.15] text-black'
-                        : darkMode
-                          ? 'bg-white/[0.02] border-white/[0.06] text-white/40 hover:text-white/60'
-                          : 'bg-black/[0.01] border-black/[0.06] text-black/40 hover:text-black/60'
-                    }`}
-                  >
-                    <Timer className="w-3.5 h-3.5" />
-                    <span className="text-[10px] uppercase tracking-[0.15em]">
-                      Pomodoro
-                    </span>
-                  </button>
-                  
-                  {isPomodoroMode && task.pomodoroSessions && task.pomodoroSessions > 0 && (
-                    <div className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border ${
-                      darkMode
-                        ? 'bg-white/[0.02] border-white/[0.06]'
-                        : 'bg-black/[0.01] border-black/[0.06]'
-                    }`}>
-                      <span className="text-sm">🍅</span>
-                      <span className={`text-xs ${
-                        darkMode ? 'text-white/60' : 'text-black/60'
-                      }`}>
-                        {task.pomodoroSessions}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Daily Goal Progress */}
-                <div className="absolute top-6 right-6">
-                  <div className={`flex items-center gap-3 px-4 py-2 rounded-lg border ${
-                    darkMode
-                      ? 'bg-white/[0.02] border-white/[0.06]'
-                      : 'bg-black/[0.01] border-black/[0.06]'
-                  }`}>
-                    <div className={`text-xs ${
-                      darkMode ? 'text-white/60' : 'text-black/60'
-                    }`}>
-                      {completedToday}/{dailyGoal}
-                    </div>
-                    <div className={`w-16 h-1.5 rounded-full overflow-hidden ${
-                      darkMode ? 'bg-white/[0.1]' : 'bg-black/[0.1]'
-                    }`}>
-                      <div 
-                        className={`h-full transition-all duration-500 ${
-                          darkMode ? 'bg-white' : 'bg-black'
-                        }`}
-                        style={{ width: `${Math.min((completedToday / dailyGoal) * 100, 100)}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <motion.h1 
-                  className={`${styles.titleSize} text-center mb-2 mt-6 truncate px-4 ${
-                    darkMode ? 'text-white' : 'text-black'
-                  }`}
-                  animate={isSlashing ? {
-                    opacity: [1, 0.6, 0.3],
-                    scale: [1, 1.02, 0.98],
-                  } : {}}
-                  transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-                >
-                  {task.title}
-                </motion.h1>
-
-                {/* Notes */}
-                {task.notes && (
-                  <div className={`flex items-center justify-center gap-2 mb-4 text-sm ${
-                    darkMode ? 'text-white/40' : 'text-black/40'
-                  }`}>
-                    <StickyNote className="w-3.5 h-3.5" />
-                    <span className="truncate max-w-[200px]">{task.notes}</span>
-                  </div>
-                )}
-
-                {/* Break indicator */}
-                {isPomodoroMode && isBreak && (
-                  <div className="text-center mb-6">
-                    <div className={`inline-block px-4 py-2 rounded-lg ${
-                      darkMode
-                        ? 'bg-white/[0.06] text-white'
-                        : 'bg-black/[0.04] text-black'
-                    }`}>
-                      <span className="text-xs uppercase tracking-[0.15em]">
-                        ☕ Break Time
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Timer Display */}
-                <div className="mb-8">
-                  <div className="flex items-center justify-center gap-3 mb-2">
-                    {Object.entries(formatTime(isPomodoroMode ? pomodoroTime : timeElapsed)).map(([unit, value], idx) => (
-                      <div key={unit} className="flex items-center">
-                        {idx > 0 && (
-                          <span className={`mx-2 ${styles.timerSize.replace('text-', 'text-base sm:text-lg md:text-xl lg:text-2xl ').split(' ').pop() || 'text-4xl'} ${
-                            darkMode ? 'text-white/20' : 'text-black/20'
-                          }`}>:</span>
-                        )}
-                        <div className="text-center">
-                          <motion.div 
-                            className={`${styles.timerSize} leading-none tabular-nums ${
-                              darkMode ? 'text-white' : 'text-black'
-                            }`}
-                            style={{ 
-                              fontVariantNumeric: 'tabular-nums',
-                              fontFeatureSettings: '"tnum" 1',
-                            }}
-                            animate={isRunning ? { 
-                              opacity: [1, 0.85, 1],
-                            } : {}}
-                            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                          >
-                            {value}
-                          </motion.div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  <div className={`flex items-center justify-center ${styles.gap}`}>
-                    <span className={`${styles.labelSize} uppercase tracking-[0.15em] ${
-                      darkMode ? 'text-white/30' : 'text-black/30'
-                    }`}>
-                      hours
-                    </span>
-                    <span className={`${styles.labelSize} uppercase tracking-[0.15em] ${
-                      darkMode ? 'text-white/30' : 'text-black/30'
-                    }`}>
-                      minutes
-                    </span>
-                    <span className={`${styles.labelSize} uppercase tracking-[0.15em] ${
-                      darkMode ? 'text-white/30' : 'text-black/30'
-                    }`}>
-                      seconds
-                    </span>
-                  </div>
-                </div>
-
-                {/* Controls */}
-                <div className="flex items-center justify-center gap-4">
-                  <motion.button
-                    onClick={handleStop}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className={`${styles.smallButtonSize} rounded-2xl flex items-center justify-center border transition-colors ${
-                      darkMode
-                        ? 'bg-white/[0.04] border-white/[0.1] text-white hover:bg-white/[0.08]'
-                        : 'bg-black/[0.02] border-black/[0.08] text-black hover:bg-black/[0.06]'
-                    }`}
-                  >
-                    <Square className="w-5 h-5" />
-                  </motion.button>
-                  
-                  <motion.button
-                    onClick={() => setIsRunning(!isRunning)}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className={`${styles.buttonSize} rounded-3xl flex items-center justify-center transition-all ${
-                      darkMode
-                        ? 'bg-white text-black hover:bg-white/95'
-                        : 'bg-black text-white hover:bg-black/95'
-                    }`}
-                  >
-                    {isRunning ? (
-                      <Pause className={styles.iconSize} fill="currentColor" />
-                    ) : (
-                      <Play className={`${styles.iconSize} ml-1`} fill="currentColor" />
-                    )}
-                  </motion.button>
-                  
-                  <motion.button
-                    onClick={handleComplete}
-                    disabled={isSlashing}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className={`${styles.smallButtonSize} rounded-2xl flex items-center justify-center border transition-colors disabled:opacity-50 ${
-                      darkMode
-                        ? 'bg-white/[0.04] border-white/[0.1] text-white hover:bg-white/[0.08]'
-                        : 'bg-black/[0.02] border-black/[0.08] text-black hover:bg-black/[0.06]'
-                    }`}
-                  >
-                    <CheckCircle2 className="w-6 h-6" />
-                  </motion.button>
-                </div>
               </div>
             </motion.div>
           )}
