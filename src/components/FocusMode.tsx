@@ -47,7 +47,7 @@ export function FocusMode({
   const [isMinimalMode, setIsMinimalMode] = useState(false);
 
   useEffect(() => {
-    setTimeElapsed(0);
+    setTimeElapsed(task?.timeSpent || 0);
     setIsRunning(false);
     setShowTimer(false);
     setIsBreak(false);
@@ -186,17 +186,16 @@ export function FocusMode({
 
   const handleStop = () => {
     setIsRunning(false);
-    setTimeElapsed(0);
+    // Sync local time with task time just in case
+    if (task) setTimeElapsed(task.timeSpent);
+    
     setShowTimer(false);
     // Exit Focus Mode
     setIsMinimalMode(false);
     onMinimize(false);
     window.electron.setFocusMode(false);
 
-    if (isPomodoroMode) {
-      setPomodoroTime(25 * 60);
-      setIsBreak(false);
-    }
+    // Don't reset Pomodoro state to allow resuming
   };
 
   const formatTime = (seconds: number) => {
@@ -579,6 +578,21 @@ export function FocusMode({
                         Current Task
                       </p>
                     </div>
+
+                    {/* Timer Display when stopped */}
+                    {(task.timeSpent > 0 || (isPomodoroMode && pomodoroTime < 25 * 60)) && (
+                      <div className="text-right">
+                        <div className={`text-2xl font-mono tabular-nums ${darkMode ? 'text-white' : 'text-black'}`}>
+                          {(() => {
+                            const { hours, minutes, seconds } = formatTime(isPomodoroMode ? pomodoroTime : task.timeSpent);
+                            return `${hours}:${minutes}:${seconds}`;
+                          })()}
+                        </div>
+                        <div className={`text-[10px] uppercase tracking-[0.15em] ${darkMode ? 'text-white/40' : 'text-black/40'}`}>
+                          {isPomodoroMode ? 'Remaining' : 'Elapsed'}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </motion.div>
 
