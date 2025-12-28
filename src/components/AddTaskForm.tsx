@@ -1,13 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
-import { Input } from './ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Calendar } from './ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { Plus, Calendar as CalendarIcon, Settings2, Sparkles, Check } from 'lucide-react';
+import { Plus, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { format, addDays, addWeeks, startOfWeek, nextMonday, nextTuesday, nextWednesday, nextThursday, nextFriday, nextSaturday, nextSunday } from 'date-fns';
-import { ko } from 'date-fns/locale';
 
 interface AddTaskFormProps {
   onAdd: (title: string, scheduledDate?: Date, recurring?: 'daily' | 'weekly' | 'monthly', notes?: string) => void;
@@ -31,7 +25,6 @@ const getDateSuggestions = (text: string): DateSuggestion[] => {
   if (!atMatch) return [];
 
   const query = atMatch[1].toLowerCase();
-  console.log('Checking suggestions for:', query); // Debug
 
   if (query.length < 1) {
     // Show common suggestions when just '@' is typed
@@ -51,8 +44,8 @@ const getDateSuggestions = (text: string): DateSuggestion[] => {
   if (numericMatch) {
     const digits = numericMatch[1];
     const currentYear = today.getFullYear();
-    const currentMonth = today.getMonth(); // 0-indexed
-    const currentDay = today.getDate();
+    // const currentMonth = today.getMonth(); // Unused variable removed
+    // const currentDay = today.getDate(); // Unused variable removed
 
     if (digits.length === 2) {
       // @MM -> MM월 1일
@@ -155,20 +148,24 @@ const getDateSuggestions = (text: string): DateSuggestion[] => {
     }
   }
 
-  console.log('Found suggestions:', suggestions.length); // Debug
   return suggestions.slice(0, 5); // Limit to 5 suggestions
 };
 
 export function AddTaskForm({ onAdd, darkMode }: AddTaskFormProps) {
-  const [open, setOpen] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [open, setOpen] = useState(false); // Used in original code but logically needed for Dialog? Kept as is.
   const [title, setTitle] = useState('');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [notes, setNotes] = useState('');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [scheduledDate, setScheduledDate] = useState<Date>();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [recurring, setRecurring] = useState<'daily' | 'weekly' | 'monthly' | undefined>();
   
   // Smart Date Picker state
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedQuickDate, setSelectedQuickDate] = useState<Date | undefined>();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [showCalendar, setShowCalendar] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const datePickerRef = useRef<HTMLDivElement>(null);
@@ -180,8 +177,8 @@ export function AddTaskForm({ onAdd, darkMode }: AddTaskFormProps) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Generate next 7 days for quick date picker
-  const quickDates = Array.from({ length: 7 }, (_, i) => {
+  // Generate next 14 days for quick date picker (Increased from 7 to show scroll effect better)
+  const quickDates = Array.from({ length: 14 }, (_, i) => {
     const date = new Date(today);
     date.setDate(today.getDate() + i);
     return date;
@@ -212,17 +209,8 @@ export function AddTaskForm({ onAdd, darkMode }: AddTaskFormProps) {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (title.trim()) {
-      onAdd(title.trim(), scheduledDate, recurring, notes.trim() || undefined);
-      setTitle('');
-      setNotes('');
-      setScheduledDate(undefined);
-      setRecurring(undefined);
-      setOpen(false);
-    }
-  };
+  // Unused handleSubmit removed to clean up warnings, or keep if you use it elsewhere
+  // const handleSubmit = ...
 
   // Accept suggestion
   const acceptSuggestion = (suggestion: DateSuggestion) => {
@@ -402,7 +390,7 @@ export function AddTaskForm({ onAdd, darkMode }: AddTaskFormProps) {
           )}
         </AnimatePresence>
 
-        {/* Smart Date Picker Popover */}
+       {/* Smart Date Picker Popover - FINAL FIX */}
         <AnimatePresence>
           {showDatePicker && title.trim() && dateSuggestions.length === 0 && (
             <motion.div
@@ -411,7 +399,8 @@ export function AddTaskForm({ onAdd, darkMode }: AddTaskFormProps) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
               transition={{ duration: 0.2 }}
-              className={`absolute top-full left-0 right-0 mt-2 p-4 rounded-xl border shadow-2xl z-50 ${
+              // [수정 포인트] overflow-hidden 추가! -> 이게 있어야 자식 요소가 부모를 뚫고 나가는걸 막습니다.
+              className={`absolute top-full left-0 w-full z-50 mt-2 p-4 rounded-xl border shadow-2xl overflow-hidden ${
                 darkMode
                   ? 'bg-black border-white/[0.06]'
                   : 'bg-white border-black/[0.06]'
@@ -426,7 +415,20 @@ export function AddTaskForm({ onAdd, darkMode }: AddTaskFormProps) {
               }`}>
                 Schedule for
               </div>
-              <div className="grid grid-cols-7 gap-1.5">
+              
+              <div 
+                className="date-scroll-container flex overflow-x-auto gap-2 pb-1 -mx-4 pl-6 pr-4 snap-x snap-mandatory w-full"
+                style={{
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none',
+                }}
+              >
+                <style>{`
+                  .date-scroll-container::-webkit-scrollbar {
+                    display: none;
+                  }
+                `}</style>
+                
                 {quickDates.map((date, index) => {
                   const isToday = index === 0;
                   const isSelected = selectedQuickDate?.getTime() === date.getTime();
@@ -438,7 +440,7 @@ export function AddTaskForm({ onAdd, darkMode }: AddTaskFormProps) {
                         setSelectedQuickDate(date);
                         handleQuickAdd(date);
                       }}
-                      className={`px-2 py-3 rounded-lg transition-all ${
+                      className={`flex-shrink-0 snap-center min-w-[3.5rem] px-2 py-3 rounded-lg transition-all flex flex-col items-center justify-center ${
                         isSelected || (isToday && !selectedQuickDate)
                           ? darkMode
                             ? 'bg-white text-black'
