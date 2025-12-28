@@ -12,11 +12,22 @@ import { motion, AnimatePresence } from 'motion/react';
 import { tasksApi, settingsApi, setAccessToken } from './utils/api';
 import { signUp, signIn, signOut, getSession, type AuthResponse } from './utils/supabase/client';
 
-export type ThemeName = 'minimal' | 'cyberpunk' | 'lavender' | 'ocean' | 'sunset';
+export type ThemeName = 'light' | 'dark' | 'cyberpunk' | 'lavender' | 'ocean' | 'sunset';
 
 export const THEMES = {
-  minimal: {
-    name: 'Minimal',
+  light: {
+    name: 'Light',
+    emoji: '⚪',
+    colors: {
+      primary: '#ffffff',
+      secondary: '#000000',
+      accent: '#666666',
+      bgLight: '#ffffff',
+      bgDark: '#000000',
+    }
+  },
+  dark: {
+    name: 'Dark',
     emoji: '⚫',
     colors: {
       primary: '#000000',
@@ -90,7 +101,7 @@ export default function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [view, setView] = useState<'focus' | 'list' | 'progress' | 'history' | 'stats'>('focus');
   const [filter, setFilter] = useState<'today' | 'all'>('today');
-  const [theme, setTheme] = useState<ThemeName>('minimal');
+  const [theme, setTheme] = useState<ThemeName>('light');
   const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
   const [isMinimized, setIsMinimized] = useState(false);
   const [dailyGoal, setDailyGoal] = useState(3);
@@ -100,7 +111,7 @@ export default function App() {
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
 
   // Compute darkMode based on theme (must be before useEffects that use it)
-  const darkMode = theme === 'minimal';
+  const darkMode = theme === 'dark';
   const currentTheme = THEMES[theme];
 
   // Check for existing session on mount
@@ -146,7 +157,7 @@ export default function App() {
       setAuthResponse(null);
       setAccessToken(null);
       setTasks([]);
-      setTheme('minimal');
+      setTheme('light');
       setDailyGoal(3);
     } catch (error) {
       console.error('Failed to logout:', error);
@@ -166,7 +177,8 @@ export default function App() {
       
       // Load settings
       const loadedSettings = await settingsApi.get();
-      setTheme(loadedSettings.theme);
+      const themeName = (loadedSettings.theme as string) === 'minimal' ? 'light' : loadedSettings.theme;
+      setTheme(themeName);
       setDailyGoal(loadedSettings.dailyGoal);
     } catch (error) {
       console.error('Failed to load data from Supabase:', error);
@@ -188,7 +200,9 @@ export default function App() {
       }
       
       if (savedTheme !== null) {
-        setTheme(JSON.parse(savedTheme));
+        let parsedTheme = JSON.parse(savedTheme);
+        if (parsedTheme === 'minimal') parsedTheme = 'light';
+        setTheme(parsedTheme);
       }
       
       if (savedDailyGoal !== null) {
@@ -253,12 +267,17 @@ export default function App() {
     const colors = THEMES[theme].colors;
     const root = document.documentElement;
     
-    if (theme === 'minimal') {
-      // Default minimal theme - remove custom properties
+    if (theme === 'light' || theme === 'dark') {
+      // Default minimal themes - remove custom properties
       root.style.removeProperty('--color-primary');
       root.style.removeProperty('--color-secondary');
       root.style.removeProperty('--color-accent');
-      root.classList.add('dark');
+      
+      if (theme === 'dark') {
+        root.classList.add('dark');
+      } else {
+        root.classList.remove('dark');
+      }
     } else {
       // Custom theme
       root.style.setProperty('--color-primary', colors.primary);
@@ -332,7 +351,7 @@ export default function App() {
       
       // T: Toggle theme
       if (e.key === 't' || e.key === 'T') {
-        setTheme(darkMode ? 'cyberpunk' : 'minimal');
+        setTheme(darkMode ? 'light' : 'dark');
       }
       
       // Escape: Clear focus/close dialogs
@@ -650,7 +669,7 @@ export default function App() {
                 </motion.button>
 
                 <motion.button
-                  onClick={() => setTheme(darkMode ? 'cyberpunk' : 'minimal')}
+                  onClick={() => setTheme(darkMode ? 'light' : 'dark')}
                   className={`w-6 h-6 rounded-md flex items-center justify-center transition-colors ${
                     darkMode
                       ? 'bg-white/[0.06] hover:bg-white/[0.1]'
