@@ -71,7 +71,7 @@ export function StatsView({ tasks, darkMode, dailyGoal, onUpdateGoal }: StatsVie
   const averagePerDay = (last30DaysCompleted / 30).toFixed(1);
 
   // Total time spent (in hours)
-  const totalTimeSpent = completedTasks.reduce((sum, task) => sum + task.timeSpent, 0);
+  const totalTimeSpent = completedTasks.reduce((sum, task) => sum + (task.timeSpent || 0), 0);
   const totalHours = Math.floor(totalTimeSpent / 3600);
   const totalMinutes = Math.floor((totalTimeSpent % 3600) / 60);
 

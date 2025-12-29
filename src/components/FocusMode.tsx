@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Task } from '../App';
 import { CheckCircle2, Play, Square, Pause, Timer, StickyNote, Zap, Coffee, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -36,6 +36,7 @@ export function FocusMode({
 }: FocusModeProps) {
   const [isSlashing, setIsSlashing] = useState(false);
   const [timeElapsed, setTimeElapsed] = useState(0);
+  const sessionSecondsRef = useRef(0);
   const [isRunning, setIsRunning] = useState(false);
   const [showNextDialog, setShowNextDialog] = useState(false);
   const [showTimer, setShowTimer] = useState(false);
@@ -95,6 +96,7 @@ export function FocusMode({
 
   useEffect(() => {
     setTimeElapsed(task?.timeSpent || 0);
+    sessionSecondsRef.current = 0;
     setIsRunning(false);
     setShowTimer(false);
     setIsBreak(false);
@@ -113,12 +115,18 @@ export function FocusMode({
             setPomodoroTime(prev => prev - 1);
             if (!isBreak) {
               setTimeElapsed(prev => prev + 1);
-              onUpdateTime(task.id, 1);
+              sessionSecondsRef.current += 1;
             }
           } else {
             // Pomodoro/Break finished
             setIsRunning(false);
             if (!isBreak) {
+              // Flush accumulated time before switch
+              if (sessionSecondsRef.current > 0) {
+                 onUpdateTime(task.id, sessionSecondsRef.current);
+                 sessionSecondsRef.current = 0;
+              }
+              
               // Work session finished, start break
               onIncrementPomodoro(task.id);
               setIsBreak(true);
@@ -132,7 +140,7 @@ export function FocusMode({
         } else {
           // Regular timer
           setTimeElapsed(prev => prev + 1);
-          onUpdateTime(task.id, 1);
+          sessionSecondsRef.current += 1;
         }
       }, 1000);
     }
@@ -202,6 +210,12 @@ export function FocusMode({
     }, 250);
     
     setTimeout(() => {
+      // Flush any remaining time
+      if (sessionSecondsRef.current > 0 && task) {
+        onUpdateTime(task.id, sessionSecondsRef.current);
+        sessionSecondsRef.current = 0;
+      }
+
       onComplete(task.id);
       setIsSlashing(false);
       setTimeElapsed(0);
@@ -232,8 +246,15 @@ export function FocusMode({
 
   const handleStop = () => {
     setIsRunning(false);
+    
+    // Flush accumulated time
+    if (sessionSecondsRef.current > 0 && task) {
+      onUpdateTime(task.id, sessionSecondsRef.current);
+      sessionSecondsRef.current = 0;
+    }
+
     // Sync local time with task time just in case
-    if (task) setTimeElapsed(task.timeSpent);
+    if (task) setTimeElapsed(task.timeSpent); // Note: task.timeSpent will be stale until parent updates, but that's okay for reset
     
     setShowTimer(false);
     // Exit Focus Mode

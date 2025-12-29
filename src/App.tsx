@@ -228,9 +228,7 @@ export default function App() {
       // Always save to localStorage as backup/fallback first
       localStorage.setItem('steady-tasks', JSON.stringify(tasks));
 
-      // Check for pending tasks (tasks with temporary IDs, usually Date.now() which is 13 chars)
-      // UUIDs are 36 chars. If we have a short ID, it means creation is in progress.
-      // In this case, we SKIP bulk update to prevent overwriting the server creation.
+      // Check for pending tasks
       const hasPendingTask = tasks.some(t => t.id.length < 20);
       
       if (hasPendingTask) {
@@ -477,9 +475,9 @@ export default function App() {
   };
 
   const updateTaskTime = (id: string, seconds: number) => {
-    setTasks(tasks.map(task => {
+    setTasks(prev => prev.map(task => {
       if (task.id === id) {
-        return { ...task, timeSpent: task.timeSpent + seconds };
+        return { ...task, timeSpent: (task.timeSpent || 0) + seconds };
       }
       return task;
     }));
@@ -554,8 +552,9 @@ export default function App() {
   const nextTask = currentTask ? focusTasks[focusTasks.findIndex(t => t.id === currentTask.id) + 1] : null;
   const completedToday = tasks.filter(t => {
     if (!t.completed) return false;
+    if (!t.completedAt) return false;
     const today = new Date();
-    const taskDate = new Date(t.createdAt);
+    const taskDate = new Date(t.completedAt);
     return taskDate.toDateString() === today.toDateString();
   }).length;
 

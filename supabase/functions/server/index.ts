@@ -117,15 +117,18 @@ logic.get("/tasks", async (c: Context) => {
     
     if (error) throw error;
     
-    // Transform DB columns to Frontend fields if needed
+    // Transform DB columns to Frontend fields
     const tasks = (data || []).map((t: any) => ({
-      ...t,
-      // Map DB columns back to what frontend expects if names differ
-      // Frontend expects: title, description, dueDate, completed
-      // DB seems to have: title, notes, scheduled_date, completed
-      description: t.notes || t.description, 
-      dueDate: t.scheduled_date || t.due_date,
-      createdAt: t.created_at
+      id: t.id,
+      title: t.title,
+      completed: t.completed,
+      createdAt: t.created_at,
+      scheduledDate: t.scheduled_date,
+      timeSpent: t.time_spent || 0,
+      notes: t.notes,
+      pomodoroSessions: t.pomodoro_sessions || 0,
+      startedAt: t.started_at,
+      completedAt: t.completed_at
     }));
 
     return c.json({ tasks });
@@ -147,13 +150,15 @@ logic.post("/tasks", async (c: Context) => {
     const supabase = getAdminClient();
     
     // Map Frontend fields to DB columns
-    // Frontend sends: title, description, dueDate, completed
-    // DB has: title, notes, scheduled_date, completed
     const newTask = {
       user_id: userId,
       title: task.title,
-      notes: task.description || null,          // Fix: description -> notes
-      scheduled_date: task.dueDate || null,     // Fix: dueDate -> scheduled_date (inferred)
+      notes: task.notes || task.description || null,
+      scheduled_date: task.scheduledDate || task.dueDate || null,
+      time_spent: task.timeSpent || 0,
+      pomodoro_sessions: task.pomodoroSessions || 0,
+      started_at: task.startedAt || null,
+      completed_at: task.completedAt || null,
       completed: task.completed || false,
     };
     
@@ -167,9 +172,16 @@ logic.post("/tasks", async (c: Context) => {
     
     // Transform back for response
     const createdTask = {
-      ...data,
-      description: data.notes,
-      dueDate: data.scheduled_date
+      id: data.id,
+      title: data.title,
+      completed: data.completed,
+      createdAt: data.created_at,
+      scheduledDate: data.scheduled_date,
+      timeSpent: data.time_spent || 0,
+      notes: data.notes,
+      pomodoroSessions: data.pomodoro_sessions || 0,
+      startedAt: data.started_at,
+      completedAt: data.completed_at
     };
 
     return c.json({ task: createdTask });
@@ -192,8 +204,16 @@ logic.put("/tasks/:id", async (c: Context) => {
     // Map frontend field names to database column names
     const dbUpdates: any = {};
     if (updates.title !== undefined) dbUpdates.title = updates.title;
-    if (updates.description !== undefined) dbUpdates.notes = updates.description; // Fix
-    if (updates.dueDate !== undefined) dbUpdates.scheduled_date = updates.dueDate; // Fix
+    if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
+    else if (updates.description !== undefined) dbUpdates.notes = updates.description; // fallback
+    
+    if (updates.scheduledDate !== undefined) dbUpdates.scheduled_date = updates.scheduledDate;
+    else if (updates.dueDate !== undefined) dbUpdates.scheduled_date = updates.dueDate; // fallback
+    
+    if (updates.timeSpent !== undefined) dbUpdates.time_spent = updates.timeSpent;
+    if (updates.pomodoroSessions !== undefined) dbUpdates.pomodoro_sessions = updates.pomodoroSessions;
+    if (updates.startedAt !== undefined) dbUpdates.started_at = updates.startedAt;
+    if (updates.completedAt !== undefined) dbUpdates.completed_at = updates.completedAt;
     if (updates.completed !== undefined) dbUpdates.completed = updates.completed;
 
     const { data, error } = await supabase
@@ -209,9 +229,16 @@ logic.put("/tasks/:id", async (c: Context) => {
     
     // Transform back
     const updatedTask = {
-      ...data,
-      description: data.notes,
-      dueDate: data.scheduled_date
+      id: data.id,
+      title: data.title,
+      completed: data.completed,
+      createdAt: data.created_at,
+      scheduledDate: data.scheduled_date,
+      timeSpent: data.time_spent || 0,
+      notes: data.notes,
+      pomodoroSessions: data.pomodoro_sessions || 0,
+      startedAt: data.started_at,
+      completedAt: data.completed_at
     };
     
     return c.json({ task: updatedTask });
@@ -264,8 +291,12 @@ logic.put("/tasks", async (c: Context) => {
         id: t.id,
         user_id: userId,
         title: t.title,
-        notes: t.description || null,           // Fix
-        scheduled_date: t.dueDate || null,      // Fix
+        notes: t.notes || t.description || null,
+        scheduled_date: t.scheduledDate || t.dueDate || null,
+        time_spent: t.timeSpent || 0,
+        pomodoro_sessions: t.pomodoroSessions || 0,
+        started_at: t.startedAt || null,
+        completed_at: t.completedAt || null,
         completed: t.completed || false,
         created_at: t.createdAt || new Date().toISOString(),
       }));
