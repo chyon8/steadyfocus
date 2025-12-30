@@ -4,7 +4,8 @@ import { Circle, Trash2, Clock, Repeat, Calendar as CalendarIcon, GripVertical, 
 import { motion } from 'motion/react';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Calendar } from './ui/calendar';
-import { useDrag, useDrop } from 'react-dnd';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface TaskItemProps {
   task: Task;
@@ -32,33 +33,22 @@ export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpd
     setEditTitle(task.title);
   }, [task.title]);
 
-  const [{ isDragging }, drag] = useDrag({
-    type: 'TASK',
-    item: { id: task.id, index },
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
-    }),
-  });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id });
 
-  const [{ isOver }, drop] = useDrop({
-    accept: 'TASK',
-    hover: (item: { id: string; index: number }) => {
-      if (!ref.current) return;
-      const dragIndex = item.index;
-      const hoverIndex = index;
-      if (dragIndex === hoverIndex) return;
-      
-      if (onReorder) {
-        onReorder(item.id, task.id);
-      }
-      item.index = hoverIndex;
-    },
-    collect: (monitor) => ({
-      isOver: monitor.isOver(),
-    }),
-  });
-
-  drag(drop(ref));
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 1 : 0,
+    position: 'relative' as 'relative',
+  };
 
   const handleComplete = () => {
     setIsSlashing(true);
@@ -77,7 +67,8 @@ export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpd
 
   return (
     <motion.div
-      ref={ref}
+      ref={setNodeRef}
+      style={style}
       animate={isSlashing ? {
         opacity: 0.3,
         x: -10,
@@ -89,10 +80,8 @@ export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpd
           handleComplete();
         }
       }}
-      className={`group relative cursor-pointer rounded-xl border transition-all ${
+      className={`group relative cursor-pointer rounded-xl border transition-colors ${
         isDragging ? 'opacity-50' : ''
-      } ${
-        isOver ? (darkMode ? 'border-white/20' : 'border-black/20') : ''
       } ${
         isCurrent
           ? darkMode
@@ -106,6 +95,8 @@ export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpd
       <div className="p-5 flex items-start gap-4">
         {/* Drag Handle */}
         <div 
+          {...attributes}
+          {...listeners}
           className={`mt-0.5 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity ${
             darkMode ? 'text-white/20' : 'text-black/20'
           }`}

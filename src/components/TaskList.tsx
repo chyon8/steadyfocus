@@ -2,8 +2,20 @@ import { Task } from '../App';
 import { TaskItem } from './TaskItem';
 import { motion, AnimatePresence } from 'motion/react';
 import { Inbox, Zap } from 'lucide-react';
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
+import { 
+  DndContext, 
+  closestCenter, 
+  KeyboardSensor, 
+  PointerSensor, 
+  useSensor, 
+  useSensors,
+  DragEndEvent
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import { useState } from 'react';
 
 interface TaskListProps {
@@ -22,6 +34,21 @@ interface TaskListProps {
 }
 
 export function TaskList({ tasks, currentTaskId, onComplete, onDelete, onStart, onUpdateSchedule, onUpdateTitle, onReorder, darkMode, selectedTaskIds = [], onToggleSelect, onStartSelected }: TaskListProps) {
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (onReorder && over && active.id !== over.id) {
+      onReorder(active.id as string, over.id as string);
+    }
+  };
+
   if (tasks.length === 0) {
     return (
       <motion.div
@@ -44,24 +71,21 @@ export function TaskList({ tasks, currentTaskId, onComplete, onDelete, onStart, 
   }
 
   return (
-    <DndProvider backend={HTML5Backend}>
+    <DndContext 
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={handleDragEnd}
+    >
       <div className="space-y-4">
         <div className="space-y-2">
-          <AnimatePresence mode="popLayout">
-            {tasks.map((task, index) => (
-              <motion.div
-                key={task.id}
-                layout
-                initial={{ opacity: 0, x: 20, scale: 0.95 }}
-                animate={{ opacity: 1, x: 0, scale: 1 }}
-                exit={{ opacity: 0, x: -20, scale: 0.95 }}
-                transition={{ 
-                  duration: 0.5,
-                  ease: [0.16, 1, 0.3, 1], // Smooth deceleration curve
-                  layout: { duration: 0.3 }
-                }}
-              >
+          <SortableContext 
+            items={tasks.map(t => t.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <AnimatePresence mode="popLayout">
+              {tasks.map((task, index) => (
                 <TaskItem
+                  key={task.id}
                   task={task}
                   index={index}
                   isCurrent={task.id === currentTaskId}
@@ -75,9 +99,9 @@ export function TaskList({ tasks, currentTaskId, onComplete, onDelete, onStart, 
                   selected={selectedTaskIds.includes(task.id)}
                   onToggleSelect={onToggleSelect}
                 />
-              </motion.div>
-            ))}
-          </AnimatePresence>
+              ))}
+            </AnimatePresence>
+          </SortableContext>
         </div>
 
         {/* Start Slashing Button */}
@@ -111,6 +135,6 @@ export function TaskList({ tasks, currentTaskId, onComplete, onDelete, onStart, 
           {selectedTaskIds.length > 0 ? `Start ${selectedTaskIds.length} Selected` : 'Start Slashing'}
         </motion.button>
       </div>
-    </DndProvider>
+    </DndContext>
   );
 }
