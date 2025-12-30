@@ -95,6 +95,7 @@ export interface Task {
   completedAt?: Date;
   notes?: string;
   pomodoroSessions?: number;
+  order?: number;
 }
 
 export default function App() {
@@ -372,7 +373,7 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [view, currentTaskId, darkMode, isMinimized]);
 
-  const getFilteredTasks = () => {
+  const getFilteredTasks = (taskList: Task[] = tasks) => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const weekStart = new Date(today);
@@ -380,7 +381,7 @@ export default function App() {
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekStart.getDate() + 7);
 
-    return tasks.filter(task => {
+    return taskList.filter(task => {
       if (task.completed) return false;
       
       if (filter === 'today') {
@@ -400,6 +401,9 @@ export default function App() {
   };
 
   const addTask = (title: string, scheduledDate?: Date, recurring?: 'daily' | 'weekly' | 'monthly', notes?: string) => {
+    // Calculate max order for new task
+    const maxOrder = tasks.reduce((max, t) => Math.max(max, t.order ?? -1), -1);
+    
     const newTask: Task = {
       id: Date.now().toString(), // Temporary ID, will be replaced by server UUID
       title,
@@ -410,6 +414,7 @@ export default function App() {
       timeSpent: 0,
       notes,
       pomodoroSessions: 0,
+      order: maxOrder + 1,
     };
     
     // Optimistically add to UI
@@ -520,7 +525,16 @@ export default function App() {
     const [draggedTask] = newTasks.splice(dragIndex, 1);
     newTasks.splice(hoverIndex, 0, draggedTask);
     
-    setTasks(newTasks);
+    // Assign order values based on new positions
+    const tasksWithOrder = newTasks.map((t, index) => ({ ...t, order: index }));
+    setTasks(tasksWithOrder);
+    
+    // Update currentTaskId to reflect new order
+    const newFilteredTasks = getFilteredTasks(newTasks);
+    const newFirstTask = newFilteredTasks[0];
+    if (newFirstTask && newFirstTask.id !== currentTaskId) {
+      setCurrentTaskId(newFirstTask.id);
+    }
   };
 
   const toggleTaskSelection = (id: string) => {

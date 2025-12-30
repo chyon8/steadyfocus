@@ -20,7 +20,8 @@ const mapTaskFromDB = (t: any): Task => ({
   pomodoroSessions: t.pomodoro_sessions || 0,
   startedAt: t.started_at ? new Date(t.started_at) : undefined,
   completedAt: t.completed_at ? new Date(t.completed_at) : undefined,
-  recurring: t.recurring, // Assuming DB has this column, if not it will be undefined
+  recurring: t.recurring,
+  order: t.order ?? 0,
 });
 
 // Map Frontend camelCase to DB snake_case
@@ -42,6 +43,7 @@ const mapTaskToDB = (userId: string, t: Partial<Task>) => {
   if (t.completedAt !== undefined) dbTask.completed_at = t.completedAt;
   if (t.createdAt !== undefined) dbTask.created_at = t.createdAt;
   if (t.recurring !== undefined) dbTask.recurring = t.recurring;
+  if (t.order !== undefined) dbTask.order = t.order;
 
   return dbTask;
 };
@@ -65,7 +67,7 @@ export const tasksApi = {
     const { data, error } = await supabase
       .from('tasks')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('order', { ascending: true });
 
     if (error) throw error;
     return (data || []).map(mapTaskFromDB);
