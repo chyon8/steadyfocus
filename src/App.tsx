@@ -11,6 +11,16 @@ import { Circle, Palette, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { tasksApi, settingsApi, setAccessToken } from './utils/api';
 import { signUp, signIn, signOut, getSession, type AuthResponse } from './utils/supabase/client';
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle 
+} from './components/ui/alert-dialog';
 
 export type ThemeName = 'light' | 'dark' | 'cyberpunk' | 'lavender' | 'ocean' | 'sunset';
 
@@ -110,6 +120,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [authResponse, setAuthResponse] = useState<AuthResponse | null>(null);
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
+  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
 
   // Compute darkMode based on theme (must be before useEffects that use it)
   const darkMode = theme === 'dark';
@@ -453,11 +464,22 @@ export default function App() {
   };
 
   const deleteTask = async (id: string) => {
+    const taskFound = tasks.find(t => t.id === id);
+    if (taskFound) {
+      setTaskToDelete(taskFound);
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!taskToDelete) return;
+    
+    const id = taskToDelete.id;
     // Optimistically update UI
     setTasks(tasks.filter(task => task.id !== id));
     if (currentTaskId === id) {
       setCurrentTaskId(null);
     }
+    setTaskToDelete(null);
     
     // Delete from database
     try {
@@ -465,8 +487,6 @@ export default function App() {
       console.log('Task deleted from database:', id);
     } catch (error) {
       console.error('Error deleting task from database:', error);
-      // Optionally: revert the optimistic update on error
-      // For now, we'll keep the optimistic update
     }
   };
 
@@ -501,6 +521,15 @@ export default function App() {
     setTasks(tasks.map(task => {
       if (task.id === id) {
         return { ...task, notes };
+      }
+      return task;
+    }));
+  };
+
+  const updateTaskTitle = (id: string, title: string) => {
+    setTasks(tasks.map(task => {
+      if (task.id === id) {
+        return { ...task, title };
       }
       return task;
     }));
@@ -811,9 +840,10 @@ export default function App() {
                       <AllTasksView
                         tasks={tasks}
                         onComplete={completeTask}
-                        onDelete={deleteTask}
+                         onDelete={deleteTask}
                         onStart={startTask}
                         onUpdateSchedule={updateTaskSchedule}
+                        onUpdateTitle={updateTaskTitle}
                         darkMode={darkMode}
                       />
                     ) : (
@@ -824,6 +854,7 @@ export default function App() {
                         onDelete={deleteTask}
                         onStart={startTask}
                         onUpdateSchedule={updateTaskSchedule}
+                        onUpdateTitle={updateTaskTitle}
                         onReorder={reorderTasks}
                         darkMode={darkMode}
                         selectedTaskIds={selectedTaskIds}
@@ -913,6 +944,30 @@ export default function App() {
           </div>
         </motion.div>
       )}
+
+      {/* Deletion Confirmation Modal */}
+      <AlertDialog open={!!taskToDelete} onOpenChange={(open) => !open && setTaskToDelete(null)}>
+        <AlertDialogContent className={darkMode ? 'bg-black border-white/[0.08] text-white' : ''}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription className={darkMode ? 'text-white/50' : ''}>
+              This will permanently delete the task "{taskToDelete?.title}".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-8 flex flex-row items-center justify-end gap-3">
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              variant="destructive"
+              className="w-24 h-10"
+            >
+              Delete
+            </AlertDialogAction>
+            <AlertDialogCancel className="w-24 h-10">
+              Cancel
+            </AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

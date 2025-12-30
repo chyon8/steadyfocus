@@ -1,6 +1,6 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Task } from '../App';
-import { Circle, Trash2, Clock, Repeat, Calendar as CalendarIcon, GripVertical, Check } from 'lucide-react';
+import { Circle, Trash2, Clock, Repeat, Calendar as CalendarIcon, GripVertical, Check, Pencil } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Calendar } from './ui/calendar';
@@ -13,6 +13,7 @@ interface TaskItemProps {
   onDelete: (id: string) => void;
   onStart: (id: string) => void;
   onUpdateSchedule?: (id: string, date: Date) => void;
+  onUpdateTitle?: (id: string, title: string) => void;
   onReorder?: (dragId: string, hoverId: string) => void;
   index: number;
   darkMode: boolean;
@@ -20,10 +21,16 @@ interface TaskItemProps {
   onToggleSelect?: (id: string) => void;
 }
 
-export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpdateSchedule, onReorder, index, darkMode, selected = false, onToggleSelect }: TaskItemProps) {
+export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpdateSchedule, onUpdateTitle, onReorder, index, darkMode, selected = false, onToggleSelect }: TaskItemProps) {
   const [isSlashing, setIsSlashing] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(task.title);
   const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setEditTitle(task.title);
+  }, [task.title]);
 
   const [{ isDragging }, drag] = useDrag({
     type: 'TASK',
@@ -143,15 +150,55 @@ export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpd
         
         <div className="flex-1 min-w-0">
           <div className="relative mb-2">
-            <p className={`text-[15px] leading-[1.4] ${
-              isSlashing ? 'line-through' : ''
-            } ${
-              isCurrent
-                ? darkMode ? 'text-white' : 'text-black'
-                : darkMode ? 'text-white/50' : 'text-black/50'
-            }`}>
-              {task.title}
-            </p>
+            {isEditing ? (
+              <input
+                autoFocus
+                type="text"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    if (editTitle.trim() && editTitle !== task.title) {
+                      onUpdateTitle?.(task.id, editTitle.trim());
+                    }
+                    setIsEditing(false);
+                  } else if (e.key === 'Escape') {
+                    setEditTitle(task.title);
+                    setIsEditing(false);
+                  }
+                }}
+                onBlur={() => {
+                  if (editTitle.trim() && editTitle !== task.title) {
+                    onUpdateTitle?.(task.id, editTitle.trim());
+                  }
+                  setIsEditing(false);
+                }}
+                onClick={(e) => e.stopPropagation()}
+                className={`w-full bg-transparent border-b outline-none text-[15px] leading-[1.4] py-0 ${
+                  darkMode 
+                    ? 'text-white border-white/20 focus:border-white/50' 
+                    : 'text-black border-black/20 focus:border-black/50'
+                }`}
+              />
+            ) : (
+              <p 
+                onClick={(e) => {
+                  if (onUpdateTitle) {
+                    e.stopPropagation();
+                    setIsEditing(true);
+                  }
+                }}
+                className={`text-[15px] leading-[1.4] ${
+                  isSlashing ? 'line-through' : ''
+                } ${
+                  isCurrent
+                    ? darkMode ? 'text-white' : 'text-black'
+                    : darkMode ? 'text-white/50' : 'text-black/50'
+                } ${onUpdateTitle ? 'cursor-text hover:opacity-80' : ''}`}
+              >
+                {task.title}
+              </p>
+            )}
             
             {isSlashing && (
               <motion.div
@@ -199,6 +246,25 @@ export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpd
             </div>
           )}
         </div>
+        
+        {/* Edit */}
+        {onUpdateTitle && (
+          <motion.button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsEditing(true);
+            }}
+            className={`opacity-0 group-hover:opacity-100 p-2 rounded-md transition-all ${
+              darkMode
+                ? 'hover:bg-white/[0.06] text-white/20 hover:text-white/50'
+                : 'hover:bg-black/[0.04] text-black/20 hover:text-black/50'
+            }`}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <Pencil className="w-3.5 h-3.5" />
+          </motion.button>
+        )}
         
         {/* Calendar */}
         {onUpdateSchedule && (

@@ -13,6 +13,7 @@ interface TaskListProps {
   onDelete: (id: string) => void;
   onStart: (id: string) => void;
   onUpdateSchedule?: (id: string, date: Date) => void;
+  onUpdateTitle?: (id: string, title: string) => void;
   onReorder?: (dragId: string, hoverId: string) => void;
   darkMode: boolean;
   selectedTaskIds?: string[];
@@ -20,7 +21,7 @@ interface TaskListProps {
   onStartSelected?: () => void;
 }
 
-export function TaskList({ tasks, currentTaskId, onComplete, onDelete, onStart, onUpdateSchedule, onReorder, darkMode, selectedTaskIds = [], onToggleSelect, onStartSelected }: TaskListProps) {
+export function TaskList({ tasks, currentTaskId, onComplete, onDelete, onStart, onUpdateSchedule, onUpdateTitle, onReorder, darkMode, selectedTaskIds = [], onToggleSelect, onStartSelected }: TaskListProps) {
   if (tasks.length === 0) {
     return (
       <motion.div
@@ -68,6 +69,7 @@ export function TaskList({ tasks, currentTaskId, onComplete, onDelete, onStart, 
                   onDelete={onDelete}
                   onStart={onStart}
                   onUpdateSchedule={onUpdateSchedule}
+                  onUpdateTitle={onUpdateTitle}
                   onReorder={onReorder}
                   darkMode={darkMode}
                   selected={selectedTaskIds.includes(task.id)}

@@ -11,10 +11,11 @@ interface AllTasksViewProps {
   onDelete: (id: string) => void;
   onStart: (id: string) => void;
   onUpdateSchedule?: (id: string, date: Date) => void;
+  onUpdateTitle?: (id: string, title: string) => void;
   darkMode: boolean;
 }
 
-export function AllTasksView({ tasks, onComplete, onDelete, onStart, onUpdateSchedule, darkMode }: AllTasksViewProps) {
+export function AllTasksView({ tasks, onComplete, onDelete, onStart, onUpdateSchedule, onUpdateTitle, darkMode }: AllTasksViewProps) {
   // Group tasks by date
   const groupTasksByDate = () => {
     const incompleteTasks = tasks.filter(t => !t.completed);
@@ -121,6 +122,7 @@ export function AllTasksView({ tasks, onComplete, onDelete, onStart, onUpdateSch
                       onDelete={onDelete}
                       onStart={onStart}
                       onUpdateSchedule={onUpdateSchedule}
+                      onUpdateTitle={onUpdateTitle}
                       darkMode={darkMode}
                     />
                   </motion.div>
