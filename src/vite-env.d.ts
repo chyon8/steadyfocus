@@ -11,6 +11,7 @@ declare global {
         electron: string;
       };
       setFocusMode: (enable: boolean, minimized?: boolean) => void;
+      setBackgroundMode: (enable: boolean) => void;
     };
   }
 }

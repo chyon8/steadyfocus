@@ -62,17 +62,17 @@ app.whenReady().then(() => {
       const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
 
       let focusWidth = 500;
-      let focusHeight = 60;
+      let focusHeight = 45;
       let isResizable = false;
 
       if (minimized) {
         // Minimized Focus Mode: Resizable thin bar
         // Allow width resizing 300+, but LOCK height at 60
         focusWidth = 500;
-        focusHeight = 60;
+        focusHeight = 45;
         isResizable = true;
-        mainWindow.setMinimumSize(300, 60);
-        mainWindow.setMaximumSize(800, 60); // Max width 800, Max height 60
+        mainWindow.setMinimumSize(300, 45);
+        mainWindow.setMaximumSize(800, 45); // Max width 800, Max height 45
       } else {
         // Normal Focus Mode: Resizable
         // TODO: Load saved width from store/file if available
@@ -141,6 +141,20 @@ app.whenReady().then(() => {
     // For now we rely on the component to send the desired width when entering focus mode
     // or just let it reset to default 600
   });
+
+  // Background Mode - Hide window but keep running
+  ipcMain.on('set-background-mode', (_event, enable: boolean) => {
+    if (!mainWindow) return;
+    
+    if (enable) {
+      mainWindow.hide();
+      // On macOS, we might want to hide from dock too? 
+      // User said "open time is recorded", implies app is still running.
+      // Keeping it in dock allows easy restore.
+    } else {
+      mainWindow.show();
+    }
+  });
 });
 
 app.on('window-all-closed', () => {
@@ -152,5 +166,7 @@ app.on('window-all-closed', () => {
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
+  } else if (mainWindow && !mainWindow.isVisible()) {
+    mainWindow.show();
   }
 });

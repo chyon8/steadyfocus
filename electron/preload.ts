@@ -10,4 +10,5 @@ contextBridge.exposeInMainWorld('electron', {
     electron: process.versions.electron,
   },
   setFocusMode: (enable: boolean, minimized?: boolean) => ipcRenderer.send('set-focus-mode', enable, minimized),
+  setBackgroundMode: (enable: boolean) => ipcRenderer.send('set-background-mode', enable),
 });

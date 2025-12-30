@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { Task } from '../App';
-import { CheckCircle2, Play, Square, Pause, Timer, StickyNote, Zap, Coffee, ArrowRight } from 'lucide-react';
+import { CheckCircle2, Play, Square, Pause, Timer, StickyNote, Zap, Coffee, ArrowRight, EyeOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription } from './ui/alert-dialog';
 import confetti from 'canvas-confetti';
@@ -342,7 +342,7 @@ export function FocusMode({
             {Object.entries(formatTime(isPomodoroMode ? pomodoroTime : timeElapsed)).map(([unit, value], idx) => (
               <div key={unit} className="flex items-center">
                 {idx > 0 && <span className={`text-sm ${darkMode ? 'text-white/40' : 'text-black/40'}`}>:</span>}
-                <span className={`text-xl font-mono tabular-nums ${darkMode ? 'text-white' : 'text-black'}`}>
+                <span className={`text-lg font-mono tabular-nums ${darkMode ? 'text-white' : 'text-black'}`}>
                   {value}
                 </span>
               </div>
@@ -370,8 +370,25 @@ export function FocusMode({
             />
           )}
 
+
+
           {/* Controls - Right */}
           <div className="flex items-center gap-2" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+             {/* Hide/Background Mode Button */}
+             <motion.button
+              onClick={() => {
+                // Trigger background mode in main process
+                window.electron.setBackgroundMode(true);
+              }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className={`p-1.5 rounded-lg ${
+                darkMode ? 'hover:bg-white/10 text-white/60 hover:text-white' : 'hover:bg-black/10 text-black/60 hover:text-black'
+              }`}
+            >
+              <EyeOff className="w-3.5 h-3.5" />
+            </motion.button>
+
             <motion.button
               onClick={handleStop}
               whileHover={{ scale: 1.05 }}
