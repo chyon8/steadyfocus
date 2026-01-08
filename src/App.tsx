@@ -121,6 +121,7 @@ export default function App() {
   const [authResponse, setAuthResponse] = useState<AuthResponse | null>(null);
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   // Compute darkMode based on theme (must be before useEffects that use it)
   const darkMode = theme === 'dark';
@@ -703,7 +704,7 @@ export default function App() {
               {/* Theme Toggle */}
               <div className="flex items-center gap-2" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
                 <motion.button
-                  onClick={handleLogout}
+                  onClick={() => setShowLogoutConfirm(true)}
                   className={`w-6 h-6 rounded-md flex items-center justify-center transition-colors ${
                     darkMode
                       ? 'bg-white/[0.06] hover:bg-white/[0.1]'
@@ -961,6 +962,29 @@ export default function App() {
               className="w-24 h-10"
             >
               Delete
+            </AlertDialogAction>
+            <AlertDialogCancel className="w-24 h-10">
+              Cancel
+            </AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Logout Confirmation Modal */}
+      <AlertDialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
+        <AlertDialogContent className={darkMode ? 'bg-black border-white/[0.08] text-white' : ''}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Log out</AlertDialogTitle>
+            <AlertDialogDescription className={darkMode ? 'text-white/50' : ''}>
+              Are you sure you want to log out?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-8 flex flex-row items-center justify-end gap-3">
+            <AlertDialogAction 
+              onClick={handleLogout}
+              className="w-24 h-10"
+            >
+              Log out
             </AlertDialogAction>
             <AlertDialogCancel className="w-24 h-10">
               Cancel
