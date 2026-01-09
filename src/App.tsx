@@ -6,6 +6,7 @@ import { WeekView } from './components/WeekView';
 import { AllTasksView } from './components/AllTasksView';
 import { AddTaskForm } from './components/AddTaskForm';
 import { HistoryView } from './components/HistoryView';
+import { OverdueSection } from './components/OverdueSection';
 import { AuthScreen } from './components/AuthScreen';
 import { Circle, Palette, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -399,6 +400,8 @@ export default function App() {
       if (filter === 'today') {
         if (task.scheduledDate) {
           const taskDate = new Date(task.scheduledDate);
+          // Exclude overdue tasks from today's list (they'll be shown separately)
+          if (taskDate < today) return false;
           return taskDate.toDateString() === today.toDateString();
         }
         return !task.scheduledDate;
@@ -410,6 +413,25 @@ export default function App() {
       
       return true;
     });
+  };
+
+  const getOverdueTasks = () => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    return tasks.filter(task => {
+      if (task.completed) return false;
+      if (!task.scheduledDate) return false;
+      
+      const taskDate = new Date(task.scheduledDate);
+      return taskDate < today;
+    });
+  };
+
+  const rescheduleTaskToToday = (id: string) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    updateTaskSchedule(id, today);
   };
 
   const addTask = (title: string, scheduledDate?: Date, recurring?: 'daily' | 'weekly' | 'monthly', notes?: string) => {
@@ -585,8 +607,31 @@ export default function App() {
     setView('focus');
   };
 
+  const rescheduleAllOverdueToToday = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Update all overdue tasks in a single state update
+    setTasks(prevTasks => 
+      prevTasks.map(task => {
+        if (task.completed) return task;
+        if (!task.scheduledDate) return task;
+        
+        const taskDate = new Date(task.scheduledDate);
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        
+        if (taskDate < todayStart) {
+          return { ...task, scheduledDate: today };
+        }
+        return task;
+      })
+    );
+  };
+
   const currentTask = currentTaskId ? tasks.find(t => t.id === currentTaskId) : null;
   const filteredTasks = getFilteredTasks();
+  const overdueTasks = getOverdueTasks();
   
   // Filter tasks for focus mode - if tasks are selected, show only those
   const focusTasks = selectedTaskIds.length > 0 
@@ -848,20 +893,36 @@ export default function App() {
                         darkMode={darkMode}
                       />
                     ) : (
-                      <TaskList
-                        tasks={filteredTasks}
-                        currentTaskId={currentTaskId}
-                        onComplete={completeTask}
-                        onDelete={deleteTask}
-                        onStart={startTask}
-                        onUpdateSchedule={updateTaskSchedule}
-                        onUpdateTitle={updateTaskTitle}
-                        onReorder={reorderTasks}
-                        darkMode={darkMode}
-                        selectedTaskIds={selectedTaskIds}
-                        onToggleSelect={toggleTaskSelection}
-                        onStartSelected={startSelectedTasks}
-                      />
+                      <>
+                        {/* Overdue Tasks Section */}
+                        <OverdueSection
+                          tasks={overdueTasks}
+                          onComplete={completeTask}
+                          onDelete={deleteTask}
+                          onStart={startTask}
+                          onUpdateSchedule={updateTaskSchedule}
+                          onUpdateTitle={updateTaskTitle}
+                          onRescheduleToToday={rescheduleTaskToToday}
+                          onRescheduleAllToToday={rescheduleAllOverdueToToday}
+                          darkMode={darkMode}
+                        />
+                        
+                        {/* Today's Tasks */}
+                        <TaskList
+                          tasks={filteredTasks}
+                          currentTaskId={currentTaskId}
+                          onComplete={completeTask}
+                          onDelete={deleteTask}
+                          onStart={startTask}
+                          onUpdateSchedule={updateTaskSchedule}
+                          onUpdateTitle={updateTaskTitle}
+                          onReorder={reorderTasks}
+                          darkMode={darkMode}
+                          selectedTaskIds={selectedTaskIds}
+                          onToggleSelect={toggleTaskSelection}
+                          onStartSelected={startSelectedTasks}
+                        />
+                      </>
                     )}
                   </div>
                 </div>

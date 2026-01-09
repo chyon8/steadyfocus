@@ -116,6 +116,12 @@ export function FocusMode({
             if (!isBreak) {
               setTimeElapsed(prev => prev + 1);
               sessionSecondsRef.current += 1;
+              
+              // Flush time to DB every 10 seconds
+              if (sessionSecondsRef.current >= 10) {
+                onUpdateTime(task.id, sessionSecondsRef.current);
+                sessionSecondsRef.current = 0;
+              }
             }
           } else {
             // Pomodoro/Break finished
@@ -141,12 +147,18 @@ export function FocusMode({
           // Regular timer
           setTimeElapsed(prev => prev + 1);
           sessionSecondsRef.current += 1;
+          
+          // Flush time to DB every 10 seconds
+          if (sessionSecondsRef.current >= 10) {
+            onUpdateTime(task.id, sessionSecondsRef.current);
+            sessionSecondsRef.current = 0;
+          }
         }
       }, 1000);
     }
     
     return () => clearInterval(interval);
-  }, [isRunning, task, isPomodoroMode, pomodoroTime, isBreak]);
+  }, [isRunning, task, isPomodoroMode, pomodoroTime, isBreak, onUpdateTime]);
 
   // Rest timer countdown
   useEffect(() => {
@@ -254,7 +266,7 @@ export function FocusMode({
     }
 
     // Sync local time with task time just in case
-    if (task) setTimeElapsed(task.timeSpent); // Note: task.timeSpent will be stale until parent updates, but that's okay for reset
+    // if (task) setTimeElapsed(task.timeSpent); // Removed to prevent resetting to stale state
     
     setShowTimer(false);
     // Exit Focus Mode
@@ -676,11 +688,11 @@ export function FocusMode({
                     </div>
 
                     {/* Timer Display when stopped */}
-                    {(task.timeSpent > 0 || (isPomodoroMode && pomodoroTime < 25 * 60)) && (
+                    {(timeElapsed > 0 || (isPomodoroMode && pomodoroTime < 25 * 60)) && (
                       <div className="text-right">
                         <div className={`text-2xl font-mono tabular-nums ${darkMode ? 'text-white' : 'text-black'}`}>
                           {(() => {
-                            const { hours, minutes, seconds } = formatTime(isPomodoroMode ? pomodoroTime : task.timeSpent);
+                            const { hours, minutes, seconds } = formatTime(isPomodoroMode ? pomodoroTime : timeElapsed);
                             return `${hours}:${minutes}:${seconds}`;
                           })()}
                         </div>

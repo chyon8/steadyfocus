@@ -131,40 +131,27 @@ export function HistoryView({ tasks, darkMode }: HistoryViewProps) {
                       : 'bg-black/[0.01] border-black/[0.06] hover:bg-black/[0.02]'
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className={`w-5 h-5 flex-shrink-0 ${
+                      darkMode ? 'text-green-400' : 'text-green-600'
+                    }`} />
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-2">
-                        <CheckCircle2 className={`w-5 h-5 flex-shrink-0 ${
-                          darkMode ? 'text-green-400' : 'text-green-600'
-                        }`} />
-                        <h3 className={`text-lg ${
-                          darkMode ? 'text-white' : 'text-black'
-                        }`}>
-                          {task.title}
-                        </h3>
-                      </div>
-                      
-                      {task.timeSpent > 0 && (
-                        <div className="flex items-center gap-2 ml-8">
-                          <Clock className={`w-4 h-4 ${
-                            darkMode ? 'text-white/30' : 'text-black/30'
-                          }`} />
-                          <span className={`text-sm ${
-                            darkMode ? 'text-white/50' : 'text-black/50'
-                          }`}>
-                            {formatTime(task.timeSpent)}
-                          </span>
-                        </div>
-                      )}
+                      <h3 className={`text-lg ${
+                        darkMode ? 'text-white' : 'text-black'
+                      }`}>
+                        {task.title}
+                      </h3>
                     </div>
                     
-                    <div className={`text-xs ${
-                      darkMode ? 'text-white/30' : 'text-black/30'
-                    }`}>
-                      {(task.completedAt || task.createdAt).toLocaleTimeString('en-US', {
-                        hour: 'numeric',
-                        minute: '2-digit',
-                      })}
+                    <div className="flex items-center gap-2">
+                      <Clock className={`w-4 h-4 ${
+                        darkMode ? 'text-white/30' : 'text-black/30'
+                      }`} />
+                      <span className={`text-sm ${
+                        darkMode ? 'text-white/50' : 'text-black/50'
+                      }`}>
+                        {formatTime(task.timeSpent || 0)}
+                      </span>
                     </div>
                   </div>
                 </motion.div>
