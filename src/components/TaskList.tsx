@@ -1,7 +1,7 @@
 import { Task } from '../App';
 import { TaskItem } from './TaskItem';
 import { motion, AnimatePresence } from 'motion/react';
-import { Inbox, Zap } from 'lucide-react';
+import { Inbox, Zap, CheckCircle2 } from 'lucide-react';
 import { 
   DndContext, 
   closestCenter, 
@@ -31,9 +31,10 @@ interface TaskListProps {
   selectedTaskIds?: string[];
   onToggleSelect?: (id: string) => void;
   onStartSelected?: () => void;
+  onCompleteSelected?: () => void;
 }
 
-export function TaskList({ tasks, currentTaskId, onComplete, onDelete, onStart, onUpdateSchedule, onUpdateTitle, onReorder, darkMode, selectedTaskIds = [], onToggleSelect, onStartSelected }: TaskListProps) {
+export function TaskList({ tasks, currentTaskId, onComplete, onDelete, onStart, onUpdateSchedule, onUpdateTitle, onReorder, darkMode, selectedTaskIds = [], onToggleSelect, onStartSelected, onCompleteSelected }: TaskListProps) {
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -134,6 +135,25 @@ export function TaskList({ tasks, currentTaskId, onComplete, onDelete, onStart, 
           <Zap className="w-5 h-5" fill="currentColor" />
           {selectedTaskIds.length > 0 ? `Start ${selectedTaskIds.length} Selected` : 'Start Slashing'}
         </motion.button>
+
+        {/* Mark Done Button - only show when tasks are selected */}
+        {selectedTaskIds.length > 0 && onCompleteSelected && (
+          <motion.button
+            onClick={onCompleteSelected}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            whileHover={{ scale: 1.01, y: -2 }}
+            whileTap={{ scale: 0.99 }}
+            className={`w-full h-14 rounded-xl font-medium uppercase tracking-[0.15em] text-sm flex items-center justify-center gap-3 transition-all ${
+              darkMode
+                ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30 border border-green-500/30'
+                : 'bg-green-500/10 text-green-600 hover:bg-green-500/20 border border-green-500/20'
+            }`}
+          >
+            <CheckCircle2 className="w-5 h-5" />
+            Mark {selectedTaskIds.length} Done
+          </motion.button>
+        )}
       </div>
     </DndContext>
   );

@@ -607,6 +607,30 @@ export default function App() {
     setView('focus');
   };
 
+  const completeSelectedTasks = () => {
+    if (selectedTaskIds.length === 0) return;
+    
+    setTasks(prevTasks => prevTasks.map(task => {
+      if (selectedTaskIds.includes(task.id)) {
+        return { ...task, completed: true, completedAt: new Date(), startedAt: undefined };
+      }
+      return task;
+    }));
+    
+    // Clear selection after completing
+    setSelectedTaskIds([]);
+    setCurrentTaskId(null);
+  };
+
+  const restoreTask = (id: string) => {
+    setTasks(prevTasks => prevTasks.map(task => {
+      if (task.id === id) {
+        return { ...task, completed: false, completedAt: undefined };
+      }
+      return task;
+    }));
+  };
+
   const rescheduleAllOverdueToToday = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -924,6 +948,7 @@ export default function App() {
                           selectedTaskIds={selectedTaskIds}
                           onToggleSelect={toggleTaskSelection}
                           onStartSelected={startSelectedTasks}
+                          onCompleteSelected={completeSelectedTasks}
                         />
                       </>
                     )}
@@ -957,7 +982,7 @@ export default function App() {
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
               >
-                <HistoryView tasks={tasks} darkMode={darkMode} />
+                <HistoryView tasks={tasks} darkMode={darkMode} onRestore={restoreTask} />
               </motion.div>
             )}
           </AnimatePresence>

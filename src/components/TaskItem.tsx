@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Task } from '../App';
-import { Circle, Trash2, Clock, Repeat, Calendar as CalendarIcon, GripVertical, Check, Pencil, AlertCircle } from 'lucide-react';
+import { Circle, Trash2, Clock, Repeat, Calendar as CalendarIcon, GripVertical, Check, Pencil, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Calendar } from './ui/calendar';
@@ -126,8 +126,6 @@ export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpd
             e.stopPropagation();
             if (onToggleSelect) {
               onToggleSelect(task.id);
-            } else {
-              handleComplete();
             }
           }}
           whileHover={{ scale: 1.1 }}
@@ -190,8 +188,14 @@ export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpd
             ) : (
               <p 
                 onClick={(e) => {
+                  e.stopPropagation();
+                  // CMD/CTRL + Click for selection
+                  if ((e.metaKey || e.ctrlKey) && onToggleSelect) {
+                    onToggleSelect(task.id);
+                    return;
+                  }
+                  // Normal click for edit
                   if (onUpdateTitle) {
-                    e.stopPropagation();
                     setIsEditing(true);
                   }
                 }}
@@ -256,24 +260,23 @@ export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpd
           )}
         </div>
         
-        {/* Edit */}
-        {onUpdateTitle && (
-          <motion.button
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsEditing(true);
-            }}
-            className={`opacity-0 group-hover:opacity-100 p-2 rounded-md transition-all ${
-              darkMode
-                ? 'hover:bg-white/[0.06] text-white/20 hover:text-white/50'
-                : 'hover:bg-black/[0.04] text-black/20 hover:text-black/50'
-            }`}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            <Pencil className="w-3.5 h-3.5" />
-          </motion.button>
-        )}
+        {/* Done */}
+        <motion.button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleComplete();
+          }}
+          className={`opacity-0 group-hover:opacity-100 p-2 rounded-md transition-all ${
+            darkMode
+              ? 'hover:bg-white/[0.06] text-white/20 hover:text-white/50'
+              : 'hover:bg-black/[0.04] text-black/20 hover:text-black/50'
+          }`}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          title="Mark as done"
+        >
+          <CheckCircle2 className="w-3.5 h-3.5" />
+        </motion.button>
         
         {/* Calendar */}
         {onUpdateSchedule && (

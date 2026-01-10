@@ -1,13 +1,14 @@
 import { Task } from '../App';
-import { CheckCircle2, Clock } from 'lucide-react';
+import { CheckCircle2, Clock, RotateCcw } from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface HistoryViewProps {
   tasks: Task[];
   darkMode: boolean;
+  onRestore?: (id: string) => void;
 }
 
-export function HistoryView({ tasks, darkMode }: HistoryViewProps) {
+export function HistoryView({ tasks, darkMode, onRestore }: HistoryViewProps) {
   const completedTasks = tasks
     .filter(t => t.completed)
     .sort((a, b) => {
@@ -144,6 +145,21 @@ export function HistoryView({ tasks, darkMode }: HistoryViewProps) {
                     </div>
                     
                     <div className="flex items-center gap-2">
+                      {onRestore && (
+                        <motion.button
+                          onClick={() => onRestore(task.id)}
+                          className={`p-2 rounded-md transition-all ${
+                            darkMode
+                              ? 'hover:bg-white/[0.06] text-white/30 hover:text-white/60'
+                              : 'hover:bg-black/[0.04] text-black/30 hover:text-black/60'
+                          }`}
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          title="Restore to Plan"
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                        </motion.button>
+                      )}
                       <Clock className={`w-4 h-4 ${
                         darkMode ? 'text-white/30' : 'text-black/30'
                       }`} />
