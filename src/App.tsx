@@ -692,25 +692,28 @@ export default function App() {
           />
           <div className="relative max-w-[1400px] mx-auto px-12 py-8" style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}>
             <div className="flex items-center justify-between">
-              {/* Logo */}
-              <motion.button
-                onClick={() => setView('focus')}
-                className="flex items-center gap-2 group"
-                whileHover={{ x: 2 }}
-                transition={{ type: "spring", stiffness: 500, damping: 40 }}
-                style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
-              >
-                <div className={`w-6 h-6 rounded-md flex items-center justify-center ${
-                  darkMode ? 'bg-white' : 'bg-black'
-                }`}>
-                  <Circle className={`w-2.5 h-2.5 ${
-                    darkMode ? 'text-black' : 'text-white'
-                  } fill-current`} />
-                </div>
-              </motion.button>
+              {/* Left spacer for traffic light buttons */}
+              <div className="w-20" />
               
-              {/* Center Navigation */}
+              {/* Center Navigation with Logo */}
               <nav className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-1" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+                {/* Logo */}
+                <motion.button
+                  onClick={() => setView('focus')}
+                  className="flex items-center gap-2 group mr-4"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 40 }}
+                >
+                  <div className={`w-6 h-6 rounded-md flex items-center justify-center ${
+                    darkMode ? 'bg-white' : 'bg-black'
+                  }`}>
+                    <Circle className={`w-2.5 h-2.5 ${
+                      darkMode ? 'text-black' : 'text-white'
+                    } fill-current`} />
+                  </div>
+                </motion.button>
+
                 {[
                   { id: 'focus', label: 'Focus', key: '1' },
                   { id: 'list', label: 'Plan', key: '2' },
