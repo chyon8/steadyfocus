@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Task } from '../App';
-import { Circle, Trash2, Clock, Repeat, Calendar as CalendarIcon, GripVertical, Check, Pencil } from 'lucide-react';
+import { Circle, Trash2, Clock, Repeat, Calendar as CalendarIcon, GripVertical, Check, Pencil, AlertCircle } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Calendar } from './ui/calendar';
@@ -20,9 +20,10 @@ interface TaskItemProps {
   darkMode: boolean;
   selected?: boolean;
   onToggleSelect?: (id: string) => void;
+  isOverdue?: boolean;
 }
 
-export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpdateSchedule, onUpdateTitle, onReorder, index, darkMode, selected = false, onToggleSelect }: TaskItemProps) {
+export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpdateSchedule, onUpdateTitle, onReorder, index, darkMode, selected = false, onToggleSelect, isOverdue = false }: TaskItemProps) {
   const [isSlashing, setIsSlashing] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -92,6 +93,21 @@ export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpd
             : 'bg-transparent border-black/[0.06] hover:border-black/[0.1] hover:bg-black/[0.02]'
       }`}
     >
+      {isOverdue && !isEditing && (
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          style={{ top: '0.75rem', right: '0.75rem' }}
+          className={`absolute flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold shadow-sm z-10 ${
+            darkMode 
+              ? 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-400 border border-amber-500/30 backdrop-blur-sm' 
+              : 'bg-gradient-to-r from-amber-50 to-orange-50 text-amber-600 border border-amber-200/80 shadow-amber-100/50'
+          }`}
+        >
+          <AlertCircle className="w-3 h-3" />
+          <span>Overdue</span>
+        </motion.div>
+      )}
       <div className="p-5 flex items-start gap-4">
         {/* Drag Handle */}
         <div 
@@ -179,7 +195,7 @@ export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpd
                     setIsEditing(true);
                   }
                 }}
-                className={`text-[15px] leading-[1.4] ${
+                className={`text-[15px] leading-[1.4] break-words pr-16 ${
                   isSlashing ? 'line-through' : ''
                 } ${
                   isCurrent
@@ -202,6 +218,8 @@ export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpd
               />
             )}
           </div>
+
+
           
           {/* Meta */}
           {(task.timeSpent > 0 || task.scheduledDate || task.recurring) && (

@@ -114,6 +114,7 @@ export function OverdueSection({
                     onUpdateSchedule={onUpdateSchedule}
                     onUpdateTitle={onUpdateTitle}
                     darkMode={darkMode}
+                    isOverdue={true}
                   />
                 </div>
                 
