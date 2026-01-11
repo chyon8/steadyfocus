@@ -932,6 +932,8 @@ export default function App() {
                           onRescheduleToToday={rescheduleTaskToToday}
                           onRescheduleAllToToday={rescheduleAllOverdueToToday}
                           darkMode={darkMode}
+                          selectedTaskIds={selectedTaskIds}
+                          onToggleSelect={toggleTaskSelection}
                         />
                         
                         {/* Today's Tasks */}

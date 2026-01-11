@@ -3,6 +3,17 @@ import { TaskItem } from './TaskItem';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronDown, ArrowRight } from 'lucide-react';
 import { useState } from 'react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "./ui/alert-dialog";
+import { Button } from "./ui/button";
 
 interface OverdueSectionProps {
   tasks: Task[];
@@ -14,6 +25,8 @@ interface OverdueSectionProps {
   onRescheduleToToday: (id: string) => void;
   onRescheduleAllToToday: () => void;
   darkMode: boolean;
+  selectedTaskIds?: string[];
+  onToggleSelect?: (id: string) => void;
 }
 
 export function OverdueSection({ 
@@ -25,9 +38,17 @@ export function OverdueSection({
   onUpdateTitle, 
   onRescheduleToToday,
   onRescheduleAllToToday,
-  darkMode 
+  darkMode,
+  selectedTaskIds = [],
+  onToggleSelect
 }: OverdueSectionProps) {
   const [isExpanded, setIsExpanded] = useState(true);
+  const [confirmTaskId, setConfirmTaskId] = useState<string | null>(null);
+
+  const handleTaskComplete = (id: string) => {
+    setConfirmTaskId(id);
+  };
+
 
   if (tasks.length === 0) return null;
 
@@ -103,42 +124,68 @@ export function OverdueSection({
                 }}
                 className="group/item flex items-center gap-2"
               >
-                <div className="flex-1">
+                <div className="flex-1 min-w-0 overflow-hidden">
                   <TaskItem
                     task={task}
                     index={index}
                     isCurrent={false}
-                    onComplete={onComplete}
+                    onComplete={handleTaskComplete}
                     onDelete={onDelete}
                     onStart={onStart}
                     onUpdateSchedule={onUpdateSchedule}
                     onUpdateTitle={onUpdateTitle}
                     darkMode={darkMode}
                     isOverdue={true}
+                    selected={selectedTaskIds.includes(task.id)}
+                    onToggleSelect={onToggleSelect}
+                    onReschedule={onRescheduleToToday}
                   />
                 </div>
-                
-                {/* Quick Reschedule Button */}
-                <motion.button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onRescheduleToToday(task.id);
-                  }}
-                  className={`opacity-0 group-hover/item:opacity-100 px-3 py-2 rounded-lg text-[10px] font-medium uppercase tracking-[0.1em] transition-all whitespace-nowrap ${
-                    darkMode
-                      ? 'bg-white/10 hover:bg-white/20 text-white/70 hover:text-white'
-                      : 'bg-black/5 hover:bg-black/10 text-black/70 hover:text-black'
-                  }`}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  → Today
-                </motion.button>
               </motion.div>
             ))}
           </motion.div>
         )}
       </AnimatePresence>
+
+      <AlertDialog open={!!confirmTaskId} onOpenChange={(open) => !open && setConfirmTaskId(null)}>
+        <AlertDialogContent className={darkMode ? 'bg-zinc-900 border-zinc-800' : ''}>
+          <AlertDialogHeader>
+            <AlertDialogTitle className={darkMode ? 'text-white' : ''}>Overdue Task</AlertDialogTitle>
+            <AlertDialogDescription className={darkMode ? 'text-zinc-400' : ''}>
+              Do you want to move this task to today?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className={darkMode ? 'bg-zinc-800 text-white hover:bg-zinc-700 border-zinc-700' : ''}>
+              Cancel
+            </AlertDialogCancel>
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (confirmTaskId) {
+                  onComplete(confirmTaskId);
+                  setConfirmTaskId(null);
+                }
+              }}
+              className={darkMode ? 'bg-transparent text-zinc-400 border-zinc-700 hover:bg-zinc-800 hover:text-white' : ''}
+            >
+              Mark as Done
+            </Button>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmTaskId) {
+                  onRescheduleToToday(confirmTaskId);
+                  setConfirmTaskId(null);
+                }
+              }}
+              className={darkMode ? 'bg-amber-500 text-black hover:bg-amber-600' : 'bg-amber-500 text-white hover:bg-amber-600'}
+            >
+              Move to Today
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </motion.div>
   );
 }
