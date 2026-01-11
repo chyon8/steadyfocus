@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { Task } from '../App';
-import { Circle, Trash2, Clock, Repeat, Calendar as CalendarIcon, GripVertical, Check, Pencil, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Circle, Trash2, Clock, Repeat, Calendar as CalendarIcon, GripVertical, Check, Pencil, AlertCircle, CheckCircle2, ArrowRight } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Calendar } from './ui/calendar';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
 interface TaskItemProps {
   task: Task;
@@ -21,9 +22,10 @@ interface TaskItemProps {
   selected?: boolean;
   onToggleSelect?: (id: string) => void;
   isOverdue?: boolean;
+  onReschedule?: (id: string) => void;
 }
 
-export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpdateSchedule, onUpdateTitle, onReorder, index, darkMode, selected = false, onToggleSelect, isOverdue = false }: TaskItemProps) {
+export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpdateSchedule, onUpdateTitle, onReorder, index, darkMode, selected = false, onToggleSelect, isOverdue = false, onReschedule }: TaskItemProps) {
   const [isSlashing, setIsSlashing] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -75,13 +77,14 @@ export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpd
         x: -10,
       } : {}}
       onClick={() => {
+        if (isOverdue) return;
         if (onToggleSelect) {
           onToggleSelect(task.id);
         } else {
           handleComplete();
         }
       }}
-      className={`group relative cursor-pointer rounded-xl border transition-colors ${
+      className={`group relative ${isOverdue ? 'cursor-default' : 'cursor-pointer'} rounded-xl border transition-colors ${
         isDragging ? 'opacity-50' : ''
       } ${
         isCurrent
@@ -93,21 +96,7 @@ export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpd
             : 'bg-transparent border-black/[0.06] hover:border-black/[0.1] hover:bg-black/[0.02]'
       }`}
     >
-      {isOverdue && !isEditing && (
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          style={{ top: '0.75rem', right: '0.75rem' }}
-          className={`absolute flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold shadow-sm z-10 ${
-            darkMode 
-              ? 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-400 border border-amber-500/30 backdrop-blur-sm' 
-              : 'bg-gradient-to-r from-amber-50 to-orange-50 text-amber-600 border border-amber-200/80 shadow-amber-100/50'
-          }`}
-        >
-          <AlertCircle className="w-3 h-3" />
-          <span>Overdue</span>
-        </motion.div>
-      )}
+
       <div className="p-5 flex items-start gap-4">
         {/* Drag Handle */}
         <div 
@@ -126,6 +115,8 @@ export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpd
             e.stopPropagation();
             if (onToggleSelect) {
               onToggleSelect(task.id);
+            } else {
+              handleComplete();
             }
           }}
           whileHover={{ scale: 1.1 }}
@@ -153,8 +144,8 @@ export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpd
           </div>
         </motion.button>
         
-        <div className="flex-1 min-w-0">
-          <div className="relative mb-2">
+        <div className="flex-1 min-w-0 overflow-hidden">
+          <div className="relative mb-2 overflow-hidden">
             {isEditing ? (
               <input
                 autoFocus
@@ -187,6 +178,7 @@ export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpd
               />
             ) : (
               <p 
+                title={task.title}
                 onClick={(e) => {
                   e.stopPropagation();
                   // CMD/CTRL + Click for selection
@@ -199,7 +191,13 @@ export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpd
                     setIsEditing(true);
                   }
                 }}
-                className={`text-[15px] leading-[1.4] break-words pr-16 ${
+                style={{
+                  display: 'block',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+                className={`text-[15px] leading-[1.4] ${isOverdue ? 'pr-12' : 'pr-16'} ${
                   isSlashing ? 'line-through' : ''
                 } ${
                   isCurrent
@@ -260,6 +258,26 @@ export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpd
           )}
         </div>
         
+        {/* Reschedule to Today */}
+        {isOverdue && onReschedule && (
+          <motion.button
+            onClick={(e) => {
+              e.stopPropagation();
+              onReschedule(task.id);
+            }}
+            className={`opacity-0 group-hover:opacity-100 p-2 rounded-md transition-all ${
+              darkMode
+                ? 'hover:bg-white/[0.06] text-white/20 hover:text-white/50'
+                : 'hover:bg-black/[0.04] text-black/20 hover:text-black/50'
+            }`}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            title="Move to Today"
+          >
+            <ArrowRight className="w-3.5 h-3.5" />
+          </motion.button>
+        )}
+
         {/* Done */}
         <motion.button
           onClick={(e) => {
@@ -318,6 +336,8 @@ export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpd
             </PopoverContent>
           </Popover>
         )}
+
+
         
         {/* Delete */}
         <motion.button
@@ -325,13 +345,11 @@ export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpd
             e.stopPropagation();
             onDelete(task.id);
           }}
-          className={`opacity-0 group-hover:opacity-100 p-2 rounded-md transition-all ${
-            darkMode
-              ? 'hover:bg-white/[0.06] text-white/20 hover:text-white/50'
-              : 'hover:bg-black/[0.04] text-black/20 hover:text-black/50'
-          }`}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
+            className={`opacity-0 group-hover:opacity-100 p-2 rounded-md transition-all ${
+              darkMode
+                ? 'hover:bg-white/[0.06] text-white/20 hover:text-white/50'
+                : 'hover:bg-black/[0.04] text-black/20 hover:text-black/50'
+            }`}
         >
           <Trash2 className="w-3.5 h-3.5" />
         </motion.button>
