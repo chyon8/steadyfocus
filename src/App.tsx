@@ -458,8 +458,31 @@ export default function App() {
     tasksApi.create(newTask).then(createdTask => {
       // Replace temporary task with server task (with UUID)
       setTasks(prevTasks => 
-        prevTasks.map(t => t.id === newTask.id ? createdTask : t)
+        prevTasks.map(t => {
+          if (t.id === newTask.id) {
+            // Merge server task with client state to preserve order changes
+            // that might have happened while request was in flight
+            return {
+              ...createdTask,
+              order: t.order, // Use current client-side order
+              completed: t.completed, // Preserve optimistic updates
+              // Preserve other potential client-side changes
+              title: t.title,
+              notes: t.notes,
+              scheduledDate: t.scheduledDate,
+            };
+          }
+          return t;
+        })
       );
+      
+      // Update selectedTaskIds if the temp task was selected
+      setSelectedTaskIds(prev => 
+        prev.map(id => id === newTask.id ? createdTask.id : id)
+      );
+      
+      // Update currentTaskId if it was the temp task
+      setCurrentTaskId(prev => prev === newTask.id ? createdTask.id : prev);
     }).catch(error => {
       console.error('Failed to create task:', error);
       // Remove optimistically added task on error
@@ -468,22 +491,27 @@ export default function App() {
   };
 
   const completeTask = (id: string) => {
-    setTasks(tasks.map(task => {
-      if (task.id === id) {
-        return { ...task, completed: true, completedAt: new Date(), startedAt: undefined };
+    setTasks(prevTasks => {
+      const updatedTasks = prevTasks.map(task => {
+        if (task.id === id) {
+          return { ...task, completed: true, completedAt: new Date(), startedAt: undefined };
+        }
+        return task;
+      });
+      
+      // Calculate next task from updated state
+      const filteredTasks = getFilteredTasks(updatedTasks);
+      const currentIndex = filteredTasks.findIndex(t => t.id === id);
+      if (currentIndex < filteredTasks.length - 1) {
+        setCurrentTaskId(filteredTasks[currentIndex + 1].id);
+      } else if (filteredTasks.length > 1) {
+        setCurrentTaskId(filteredTasks[0].id);
+      } else {
+        setCurrentTaskId(null);
       }
-      return task;
-    }));
-    
-    const filteredTasks = getFilteredTasks();
-    const currentIndex = filteredTasks.findIndex(t => t.id === id);
-    if (currentIndex < filteredTasks.length - 1) {
-      setCurrentTaskId(filteredTasks[currentIndex + 1].id);
-    } else if (filteredTasks.length > 1) {
-      setCurrentTaskId(filteredTasks[0].id);
-    } else {
-      setCurrentTaskId(null);
-    }
+      
+      return updatedTasks;
+    });
   };
 
   const deleteTask = async (id: string) => {
@@ -502,6 +530,9 @@ export default function App() {
     if (currentTaskId === id) {
       setCurrentTaskId(null);
     }
+    
+    // Remove from selectedTaskIds
+    setSelectedTaskIds(prev => prev.filter(taskId => taskId !== id));
     setTaskToDelete(null);
     
     // Delete from database
@@ -604,6 +635,7 @@ export default function App() {
     
     // Set the first selected task as current
     setCurrentTaskId(selectedTaskIds[0]);
+    setSelectedTaskIds([]); // Clear selection after starting
     setView('focus');
   };
 

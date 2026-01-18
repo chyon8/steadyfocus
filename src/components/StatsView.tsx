@@ -1,6 +1,6 @@
 import { Task } from '../App';
 import { motion } from 'motion/react';
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, Tooltip } from 'recharts';
 import { TrendingUp, Target, Flame, Clock, CheckCircle2, Calendar } from 'lucide-react';
 import { useState } from 'react';
 
@@ -14,6 +14,8 @@ interface StatsViewProps {
 export function StatsView({ tasks, darkMode, dailyGoal, onUpdateGoal }: StatsViewProps) {
   const [isEditingGoal, setIsEditingGoal] = useState(false);
   const [goalInput, setGoalInput] = useState(dailyGoal.toString());
+  const [graphMetric, setGraphMetric] = useState<'count' | 'time'>('count');
+  const [timeRange, setTimeRange] = useState<7 | 14 | 30 | 'all'>(7);
 
   // Calculate stats
   const completedTasks = tasks.filter(t => t.completed);
@@ -46,19 +48,50 @@ export function StatsView({ tasks, darkMode, dailyGoal, onUpdateGoal }: StatsVie
     checkDate.setDate(checkDate.getDate() - 1);
   }
 
-  // Last 7 days data
-  const last7Days = Array.from({ length: 7 }, (_, i) => {
+  // Calculate days to show
+  let daysToShow = 7;
+  if (typeof timeRange === 'number') {
+    daysToShow = timeRange;
+  } else if (timeRange === 'all') {
+    if (completedTasks.length > 0) {
+      const oldestTask = completedTasks.reduce((oldest, task) => {
+        if (!task.completedAt) return oldest;
+        const date = new Date(task.completedAt);
+        return date < oldest ? date : oldest;
+      }, new Date());
+      
+      const diffTime = Math.abs(today.getTime() - oldestTask.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+      daysToShow = Math.max(diffDays + 1, 7);
+    }
+  }
+
+  // Chart data
+  const chartData = Array.from({ length: daysToShow }, (_, i) => {
     const date = new Date(today);
-    date.setDate(today.getDate() - (6 - i));
+    date.setDate(today.getDate() - ((daysToShow - 1) - i));
     const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-    const count = completedTasks.filter(t => {
+    const completedDateStats = completedTasks.filter(t => {
       if (!t.completedAt) return false;
       const completedDate = new Date(t.completedAt);
       completedDate.setHours(0, 0, 0, 0);
       return completedDate.getTime() === date.getTime();
-    }).length;
+    });
     
-    return { day: dayName, count, isToday: i === 6 };
+    const count = completedDateStats.length;
+    const timeSpentSeconds = completedDateStats.reduce((acc, t) => acc + (t.timeSpent || 0), 0);
+    const timeMinutes = Math.floor(timeSpentSeconds / 60);
+    const timeHours = Number((timeMinutes / 60).toFixed(1));
+    const fullDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    
+    return { 
+      day: dayName, 
+      count, 
+      timeMinutes, 
+      timeHours, 
+      fullDate, 
+      isToday: i === daysToShow - 1 
+    };
   });
 
   // Average per day (last 30 days)
@@ -237,18 +270,65 @@ export function StatsView({ tasks, darkMode, dailyGoal, onUpdateGoal }: StatsVie
           darkMode ? 'bg-white/[0.02] border-white/[0.06]' : 'bg-black/[0.01] border-black/[0.06]'
         }`}
       >
-        <div className="mb-8">
-          <h2 className={`text-2xl mb-2 ${darkMode ? 'text-white' : 'text-black'}`}>
-            Last 7 Days
-          </h2>
-          <p className={`text-xs ${darkMode ? 'text-white/40' : 'text-black/40'}`}>
-            Your daily completion trend
-          </p>
+        <div className="flex items-start justify-between mb-8">
+          <div>
+            <h2 className={`text-2xl mb-2 ${darkMode ? 'text-white' : 'text-black'}`}>
+              Last {timeRange === 'all' ? 'All Time' : `${timeRange} Days`}
+            </h2>
+            <p className={`text-xs ${darkMode ? 'text-white/40' : 'text-black/40'}`}>
+              Your daily completion trend
+            </p>
+          </div>
+          
+          <div className="flex gap-2">
+            <div className={`flex p-1 rounded-lg ${
+              darkMode ? 'bg-white/[0.06]' : 'bg-black/[0.04]'
+            }`}>
+              {(['7', '14', '30', 'all'] as const).map((range) => (
+                <button
+                  key={range}
+                  onClick={() => setTimeRange(range === 'all' ? 'all' : parseInt(range) as 7 | 14 | 30)}
+                  className={`px-3 py-1.5 rounded-md text-[10px] uppercase tracking-wider transition-colors ${
+                    (range === 'all' && timeRange === 'all') || (range !== 'all' && timeRange === parseInt(range))
+                      ? darkMode ? 'bg-white text-black' : 'bg-black text-white'
+                      : darkMode ? 'text-white/40 hover:text-white/60' : 'text-black/40 hover:text-black/60'
+                  }`}
+                >
+                  {range === 'all' ? 'ALL' : `${range}D`}
+                </button>
+              ))}
+            </div>
+
+            <div className={`flex p-1 rounded-lg ${
+              darkMode ? 'bg-white/[0.06]' : 'bg-black/[0.04]'
+            }`}>
+              <button
+                onClick={() => setGraphMetric('count')}
+                className={`px-3 py-1.5 rounded-md text-[10px] uppercase tracking-wider transition-colors ${
+                  graphMetric === 'count'
+                    ? darkMode ? 'bg-white text-black' : 'bg-black text-white'
+                    : darkMode ? 'text-white/40 hover:text-white/60' : 'text-black/40 hover:text-black/60'
+                }`}
+              >
+                Count
+              </button>
+              <button
+                onClick={() => setGraphMetric('time')}
+                className={`px-3 py-1.5 rounded-md text-[10px] uppercase tracking-wider transition-colors ${
+                  graphMetric === 'time'
+                    ? darkMode ? 'bg-white text-black' : 'bg-black text-white'
+                    : darkMode ? 'text-white/40 hover:text-white/60' : 'text-black/40 hover:text-black/60'
+                }`}
+              >
+                Time
+              </button>
+            </div>
+          </div>
         </div>
         
         <div className="h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={last7Days}>
+            <BarChart data={chartData}>
               <XAxis 
                 dataKey="day" 
                 axisLine={false}
@@ -266,13 +346,38 @@ export function StatsView({ tasks, darkMode, dailyGoal, onUpdateGoal }: StatsVie
                   fill: darkMode ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)',
                   fontSize: 11,
                 }}
-                allowDecimals={false}
+                allowDecimals={graphMetric === 'time'}
+                tickFormatter={(value) => graphMetric === 'time' ? `${value}h` : value}
+              />
+              <Tooltip
+                cursor={{ fill: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' }}
+                content={({ active, payload }: any) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload;
+                    return (
+                      <div className={`px-3 py-2 rounded-lg text-xs border ${
+                        darkMode 
+                          ? 'bg-black/90 border-white/[0.1] text-white' 
+                          : 'bg-white/90 border-black/[0.1] text-black'
+                      }`}>
+                        <div className="font-medium mb-1">{data.fullDate}</div>
+                        <div>
+                          {graphMetric === 'count' 
+                            ? `${data.count} tasks completed`
+                            : `${Math.floor(data.timeMinutes / 60)}h ${data.timeMinutes % 60}m focused`}
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
               />
               <Bar 
-                dataKey="count" 
-                radius={[8, 8, 0, 0]}
+                dataKey={graphMetric === 'count' ? "count" : "timeHours"} 
+                radius={[4, 4, 0, 0]}
+                animationDuration={1000}
               >
-                {last7Days.map((entry, index) => (
+                {chartData.map((entry, index) => (
                   <Cell 
                     key={`cell-${index}`}
                     fill={entry.isToday 
