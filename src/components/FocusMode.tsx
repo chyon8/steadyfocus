@@ -46,6 +46,7 @@ export function FocusMode({
   const [isResting, setIsResting] = useState(false);
   const [restTime, setRestTime] = useState(5 * 60); // 5 minutes default rest
   const [isMinimalMode, setIsMinimalMode] = useState(false);
+  const [isHoveringBar, setIsHoveringBar] = useState(false);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
   useEffect(() => {
@@ -344,84 +345,81 @@ export function FocusMode({
     <>
       {isMinimalMode ? (
         <div 
-          className="fixed inset-0 flex items-center justify-between px-4 select-none"
-          style={{ 
-            backgroundColor: darkMode ? '#000000' : '#ffffff',
-          }}
+          className={`fixed inset-0 flex items-center justify-between px-4 select-none transition-colors ${
+            darkMode ? 'bg-neutral-950' : 'bg-white'
+          }`}
+          onMouseEnter={() => setIsHoveringBar(true)}
+          onMouseLeave={() => setIsHoveringBar(false)}
         >
           {/* Timer - Left */}
-          <div className="flex items-center gap-2">
-            {Object.entries(formatTime(isPomodoroMode ? pomodoroTime : timeElapsed)).map(([unit, value], idx) => (
-              <div key={unit} className="flex items-center">
-                {idx > 0 && <span className={`text-sm ${darkMode ? 'text-white/40' : 'text-black/40'}`}>:</span>}
-                <span className={`text-lg font-mono tabular-nums ${darkMode ? 'text-white' : 'text-black'}`}>
-                  {value}
+          <div className="flex items-center">
+            <div className={`flex items-center font-mono tabular-nums text-base tracking-tight ${
+              darkMode ? 'text-white/90' : 'text-black/90'
+            }`}>
+              {Object.entries(formatTime(isPomodoroMode ? pomodoroTime : timeElapsed)).map(([unit, value], idx) => (
+                <span key={unit} className="flex items-center">
+                  {idx > 0 && (
+                    <span className={`mx-0.5 ${darkMode ? 'text-white/25' : 'text-black/25'}`}>:</span>
+                  )}
+                  <span>{value}</span>
                 </span>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
 
-
-          {/* Task Title - Center (Draggable Area) */}
-          {windowWidth > 350 && (
-            <div 
-              className="flex-1 text-center truncate px-2 mx-2 cursor-move"
-              style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
-            >
-               <span className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-black'}`}>
-                 {task.title}
-               </span>
-            </div>
-          )}
-          
-          {/* Drag Area Placeholder for small screens */}
-          {windowWidth <= 350 && (
-            <div 
-              className="flex-1 h-full cursor-move"
-              style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
-            />
-          )}
-
-
+          {/* Center - Draggable Area with Task Title */}
+          <div 
+            className="flex-1 flex items-center justify-center h-full cursor-move"
+            style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+          >
+            <span className={`text-sm font-medium truncate max-w-[200px] ${
+              darkMode ? 'text-white/70' : 'text-black/70'
+            }`}>
+              {task.title}
+            </span>
+          </div>
 
           {/* Controls - Right */}
-          <div className="flex items-center gap-2" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
-             {/* Hide/Background Mode Button */}
-             <motion.button
-              onClick={() => {
-                // Trigger background mode in main process
-                window.electron.setBackgroundMode(true);
-              }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className={`p-1.5 rounded-lg ${
-                darkMode ? 'hover:bg-white/10 text-white/60 hover:text-white' : 'hover:bg-black/10 text-black/60 hover:text-black'
+          <div 
+            className="flex items-center gap-1"
+            style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+          >
+            {/* Hide Button */}
+            <button
+              onClick={() => window.electron.setBackgroundMode(true)}
+              className={`p-1.5 rounded-md transition-all ${
+                darkMode 
+                  ? 'text-white/40 hover:text-white/70 hover:bg-white/5' 
+                  : 'text-black/40 hover:text-black/70 hover:bg-black/5'
               }`}
             >
               <EyeOff className="w-3.5 h-3.5" />
-            </motion.button>
+            </button>
 
-            <motion.button
+            {/* Stop Button */}
+            <button
               onClick={handleStop}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className={`p-2 rounded-lg ${
-                darkMode ? 'hover:bg-white/10 text-white' : 'hover:bg-black/10 text-black'
+              className={`p-1.5 rounded-md transition-all ${
+                darkMode 
+                  ? 'text-white/50 hover:text-white hover:bg-white/5' 
+                  : 'text-black/50 hover:text-black hover:bg-black/5'
               }`}
             >
               <Square className="w-4 h-4" />
-            </motion.button>
-            <motion.button
+            </button>
+
+            {/* Complete Button */}
+            <button
               onClick={handleComplete}
               disabled={isSlashing}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className={`p-2 rounded-lg ${
-                darkMode ? 'hover:bg-white/10 text-white' : 'hover:bg-black/10 text-black'
+              className={`p-1.5 rounded-md transition-all ${
+                darkMode 
+                  ? 'text-emerald-400/80 hover:text-emerald-400 hover:bg-emerald-400/10' 
+                  : 'text-emerald-600/80 hover:text-emerald-600 hover:bg-emerald-600/10'
               }`}
             >
               <CheckCircle2 className="w-4 h-4" />
-            </motion.button>
+            </button>
           </div>
         </div>
       ) : (
@@ -760,7 +758,7 @@ export function FocusMode({
                 }`}
               >
                 <Zap className="w-5 h-5" fill="currentColor" />
-                Start Slashing
+                Enter the zone
               </motion.button>
               
               <div className={`mt-8 text-center text-sm ${
