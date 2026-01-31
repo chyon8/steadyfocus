@@ -470,6 +470,10 @@ export default function App() {
               title: t.title,
               notes: t.notes,
               scheduledDate: t.scheduledDate,
+              // Critical: Preserve time tracking state that might have advanced while saving
+              timeSpent: t.timeSpent, 
+              startedAt: t.startedAt,
+              pomodoroSessions: t.pomodoroSessions,
             };
           }
           return t;
