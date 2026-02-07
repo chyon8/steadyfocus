@@ -11,4 +11,5 @@ contextBridge.exposeInMainWorld('electron', {
   },
   setFocusMode: (enable: boolean, minimized?: boolean) => ipcRenderer.send('set-focus-mode', enable, minimized),
   setBackgroundMode: (enable: boolean) => ipcRenderer.send('set-background-mode', enable),
+  getAppState: () => ipcRenderer.invoke('get-app-state'),
 });

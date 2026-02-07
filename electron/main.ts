@@ -1,24 +1,65 @@
-import { app, BrowserWindow, ipcMain, screen } from 'electron';
+import { app, BrowserWindow, ipcMain, screen, powerSaveBlocker, powerMonitor } from 'electron';
 import * as path from 'path';
 
 let mainWindow: BrowserWindow | null = null;
 let originalBounds: Electron.Rectangle | null = null;
+import { SimpleStore } from './store';
+
+const store = new SimpleStore({
+  configName: 'user-preferences',
+  defaults: {
+    windowBounds: { width: 1200, height: 800 },
+    isFocusMode: false,
+    focusMinimized: false,
+    focusBounds: null
+  }
+});
+
+let powerSaveBlockerId: number | null = null;
 
 function createWindow() {
+  const isFocusMode = store.get('isFocusMode');
+  const savedBounds = store.get('windowBounds');
+  const focusBounds = store.get('focusBounds');
+
+  let width = savedBounds?.width || 1200;
+  let height = savedBounds?.height || 800;
+  let x = savedBounds?.x;
+  let y = savedBounds?.y;
+
+  // If launching in focus mode, use focus bounds
+  if (isFocusMode && focusBounds) {
+    width = focusBounds.width;
+    height = focusBounds.height;
+    x = focusBounds.x;
+    y = focusBounds.y;
+  }
+
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
-    minWidth: 800,
-    minHeight: 600,
+    width,
+    height,
+    x,
+    y,
+    minWidth: isFocusMode ? 300 : 800,
+    minHeight: isFocusMode ? 45 : 600,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
+      backgroundThrottling: false, // Ensure timers run in background
     },
-    titleBarStyle: 'hiddenInset', // Better for macOS focus mode transition
+    titleBarStyle: 'hiddenInset',
     trafficLightPosition: { x: 15, y: 15 },
     show: false,
+    resizable: true,
+    alwaysOnTop: isFocusMode,
   });
+
+  if (isFocusMode) {
+    if (process.platform === 'darwin') {
+      mainWindow.setWindowButtonVisibility(false);
+    }
+  }
 
   mainWindow.once('ready-to-show', () => {
     mainWindow?.show();
@@ -30,6 +71,21 @@ function createWindow() {
   } else {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
+
+  // Save bounds on resize/move
+  const saveBounds = () => {
+    if (!mainWindow) return;
+    const bounds = mainWindow.getBounds();
+    const isFocus = store.get('isFocusMode');
+    if (isFocus) {
+      store.set('focusBounds', bounds);
+    } else {
+      store.set('windowBounds', bounds);
+    }
+  };
+
+  mainWindow.on('resize', saveBounds);
+  mainWindow.on('move', saveBounds);
 
   mainWindow.on('closed', () => {
     mainWindow = null;
@@ -47,8 +103,17 @@ app.whenReady().then(() => {
       return;
     }
 
+    store.set('isFocusMode', enable);
+    store.set('focusMinimized', minimized);
+
     if (enable) {
       console.log('Enabling focus mode...');
+      
+      // Prevent App Nap when in Focus Mode (essential for timer accuracy when hidden)
+      if (powerSaveBlockerId === null) {
+        powerSaveBlockerId = powerSaveBlocker.start('prevent-app-suspension');
+        console.log('PowerSaveBlocker started:', powerSaveBlockerId);
+      }
       
       // Save current bounds ONLY if we haven't saved them yet OR if we are transitioning from normal app mode
       // If we are just toggling minimized state within focus mode, we don't want to overwrite originalBounds
@@ -112,6 +177,14 @@ app.whenReady().then(() => {
       
     } else {
       console.log('Disabling focus mode...');
+      
+      // Stop preventing App Nap
+      if (powerSaveBlockerId !== null) {
+        powerSaveBlocker.stop(powerSaveBlockerId);
+        console.log('PowerSaveBlocker stopped:', powerSaveBlockerId);
+        powerSaveBlockerId = null;
+      }
+
       // Restore original window bounds
       if (originalBounds) {
         console.log('Restoring bounds:', originalBounds);
@@ -154,6 +227,38 @@ app.whenReady().then(() => {
     } else {
       mainWindow.show();
     }
+  });
+
+  // Get initial app state for renderer
+  ipcMain.handle('get-app-state', () => {
+    return {
+      isFocusMode: store.get('isFocusMode'),
+      focusMinimized: store.get('focusMinimized')
+    };
+  });
+
+  // Handle system suspend (sleep)
+  powerMonitor.on('suspend', () => {
+    console.log('System suspending...');
+    // Ensure state is saved
+    if (mainWindow) {
+        const isFocus = store.get('isFocusMode');
+        // We can't really "flush" the renderer here easily without IPC, 
+        // but the renderer should handle its own saving via periodic flushes.
+        // Main process state is already saved.
+    }
+  });
+
+  powerMonitor.on('resume', () => {
+    console.log('System resuming...');
+    // If we are in focus mode, ensure we are still blocking app suspension if needed
+    // (though powerSaveBlocker usually handles this across sleeps)
+    if (store.get('isFocusMode') && powerSaveBlockerId === null) {
+        powerSaveBlockerId = powerSaveBlocker.start('prevent-app-suspension');
+    }
+    
+    // Potentially force reload or refresh if UI is glitched? 
+    // For now, reliance on store-based restoration on reload is safer.
   });
 });
 

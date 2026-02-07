@@ -12,6 +12,7 @@ declare global {
       };
       setFocusMode: (enable: boolean, minimized?: boolean) => void;
       setBackgroundMode: (enable: boolean) => void;
+      getAppState: () => Promise<{ isFocusMode: boolean; focusMinimized: boolean }>;
     };
   }
 }

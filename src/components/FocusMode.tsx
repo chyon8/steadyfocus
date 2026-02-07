@@ -36,7 +36,11 @@ export function FocusMode({
 }: FocusModeProps) {
   const [isSlashing, setIsSlashing] = useState(false);
   const [timeElapsed, setTimeElapsed] = useState(0);
-  const sessionSecondsRef = useRef(0);
+  // Timestamp-based timer refs for accuracy
+  const sessionStartTimeRef = useRef<number>(0); // When current session started (ms)
+  const accumulatedTimeRef = useRef<number>(0);  // Time accumulated before current session (seconds)
+  const lastFlushTimeRef = useRef<number>(0);    // Last flushed elapsed time (seconds)
+  const initialTimeSpentRef = useRef<number>(0); // Snapshot of timeSpent when session started
   const [isRunning, setIsRunning] = useState(false);
   const [showNextDialog, setShowNextDialog] = useState(false);
   const [showTimer, setShowTimer] = useState(false);
@@ -53,7 +57,19 @@ export function FocusMode({
     const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Sync minimal mode state with parent prop (especially for state restoration on launch)
+  useEffect(() => {
+    if (isMinimized && !isMinimalMode) {
+      setIsMinimalMode(true);
+      setShowTimer(true);
+      // If we are restoring to minimized mode, we probably want to assume the timer was active or ready
+      // But we don't auto-start unless we persist "isRunning" too.
+      // For now, at least the UI won't be crushed.
+    }
+  }, [isMinimized]);
 
   // Responsive styles calculation
   const getResponsiveStyles = () => {
@@ -97,7 +113,13 @@ export function FocusMode({
 
   useEffect(() => {
     setTimeElapsed(task?.timeSpent || 0);
-    sessionSecondsRef.current = 0;
+    // Reset all timer refs when task changes
+    sessionStartTimeRef.current = 0;
+    accumulatedTimeRef.current = 0;
+    lastFlushTimeRef.current = 0;
+    // Sync initial time ref with new task
+    initialTimeSpentRef.current = task?.timeSpent || 0;
+    
     setIsRunning(false);
     setShowTimer(false);
     setIsBreak(false);
@@ -105,61 +127,105 @@ export function FocusMode({
     setRestTime(5 * 60);
   }, [task?.id]);
 
+  // Initialize session start time when timer starts
+  useEffect(() => {
+    if (isRunning && sessionStartTimeRef.current === 0) {
+      sessionStartTimeRef.current = Date.now();
+      // CRITICAL: Sync initialTimeSpentRef with current prop value on EVERY resume
+      // This ensures that after stopping and starting, we use the latest DB value as the base.
+      initialTimeSpentRef.current = task?.timeSpent || 0;
+    }
+  }, [isRunning, task?.timeSpent]);
+
   useEffect(() => {
     let interval: NodeJS.Timeout;
     
+    // Clear any existing interval to be safe
+    const cleanup = () => {
+      if (interval) clearInterval(interval);
+    };
+
     if (isRunning && task) {
       interval = setInterval(() => {
+        const now = Date.now();
+        // Calculate total seconds elapsed in THIS active session
+        const sessionSeconds = Math.floor((now - sessionStartTimeRef.current) / 1000);
+        // Add to previously accumulated time
+        const totalSessionElapsed = accumulatedTimeRef.current + sessionSeconds;
+        
         if (isPomodoroMode) {
-          // Pomodoro countdown
-          if (pomodoroTime > 0) {
-            setPomodoroTime(prev => prev - 1);
+          // Pomodoro countdown logic
+          const pomodoroRemaining = Math.max(0, (isBreak ? 5 * 60 : 25 * 60) - totalSessionElapsed);
+          setPomodoroTime(pomodoroRemaining);
+          
+          if (pomodoroRemaining > 0) {
             if (!isBreak) {
-              setTimeElapsed(prev => prev + 1);
-              sessionSecondsRef.current += 1;
-              
-              // Flush time to DB every 10 seconds
-              if (sessionSecondsRef.current >= 10) {
-                onUpdateTime(task.id, sessionSecondsRef.current);
-                sessionSecondsRef.current = 0;
+              // WORK MODE
+              // Update UI state
+              setTimeElapsed(prev => {
+                // Determine what the new total time SHOULD be based on STABLE ref
+                const newTotal = (initialTimeSpentRef.current || 0) + totalSessionElapsed;
+                // Only update if it's different to avoid needless renders
+                return newTotal !== prev ? newTotal : prev;
+              });
+
+              // Flush to DB every 10 seconds
+              if (totalSessionElapsed - lastFlushTimeRef.current >= 10) {
+                const delta = totalSessionElapsed - lastFlushTimeRef.current;
+                if (delta > 0) {
+                  onUpdateTime(task.id, delta);
+                  lastFlushTimeRef.current = totalSessionElapsed;
+                }
               }
             }
           } else {
-            // Pomodoro/Break finished
+            // Pomodoro/Break FINISHED
             setIsRunning(false);
+            
             if (!isBreak) {
-              // Flush accumulated time before switch
-              if (sessionSecondsRef.current > 0) {
-                 onUpdateTime(task.id, sessionSecondsRef.current);
-                 sessionSecondsRef.current = 0;
+              // Flush remaining time
+              const delta = totalSessionElapsed - lastFlushTimeRef.current;
+              if (delta > 0) {
+                onUpdateTime(task.id, delta);
               }
               
-              // Work session finished, start break
+              // Switch to Break
               onIncrementPomodoro(task.id);
               setIsBreak(true);
-              setPomodoroTime(5 * 60); // 5 minute break
+              sessionStartTimeRef.current = 0;
+              accumulatedTimeRef.current = 0;
+              lastFlushTimeRef.current = 0;
             } else {
-              // Break finished, start new work session
+              // Switch to Work
               setIsBreak(false);
-              setPomodoroTime(25 * 60); // 25 minute work
+              sessionStartTimeRef.current = 0;
+              accumulatedTimeRef.current = 0;
+              lastFlushTimeRef.current = 0;
             }
           }
         } else {
-          // Regular timer
-          setTimeElapsed(prev => prev + 1);
-          sessionSecondsRef.current += 1;
+          // REGULAR MODE (Stopwatch)
           
-          // Flush time to DB every 10 seconds
-          if (sessionSecondsRef.current >= 10) {
-            onUpdateTime(task.id, sessionSecondsRef.current);
-            sessionSecondsRef.current = 0;
+          // Update UI with STABLE ref
+          setTimeElapsed(prev => {
+            const newTotal = (initialTimeSpentRef.current || 0) + totalSessionElapsed;
+            return newTotal !== prev ? newTotal : prev;
+          });
+          
+          // Flush to DB every 10 seconds
+          if (totalSessionElapsed - lastFlushTimeRef.current >= 10) {
+            const delta = totalSessionElapsed - lastFlushTimeRef.current;
+            if (delta > 0) {
+              onUpdateTime(task.id, delta);
+              lastFlushTimeRef.current = totalSessionElapsed;
+            }
           }
         }
       }, 1000);
     }
     
-    return () => clearInterval(interval);
-  }, [isRunning, task, isPomodoroMode, pomodoroTime, isBreak, onUpdateTime]);
+    return cleanup;
+  }, [isRunning, task?.id, isPomodoroMode, isBreak, onUpdateTime, onIncrementPomodoro]);
 
   // Rest timer countdown
   useEffect(() => {
@@ -223,10 +289,18 @@ export function FocusMode({
     }, 250);
     
     setTimeout(() => {
-      // Flush any remaining time
-      if (sessionSecondsRef.current > 0 && task) {
-        onUpdateTime(task.id, sessionSecondsRef.current);
-        sessionSecondsRef.current = 0;
+      // Flush any remaining time using timestamp-based calculation
+      if (sessionStartTimeRef.current > 0 && task) {
+        const sessionSeconds = Math.floor((Date.now() - sessionStartTimeRef.current) / 1000);
+        const totalElapsed = accumulatedTimeRef.current + sessionSeconds;
+        const delta = totalElapsed - lastFlushTimeRef.current;
+        if (delta > 0) {
+          onUpdateTime(task.id, delta);
+        }
+        // Reset refs
+        sessionStartTimeRef.current = 0;
+        accumulatedTimeRef.current = 0;
+        lastFlushTimeRef.current = 0;
       }
 
       onComplete(task.id);
@@ -260,14 +334,19 @@ export function FocusMode({
   const handleStop = () => {
     setIsRunning(false);
     
-    // Flush accumulated time
-    if (sessionSecondsRef.current > 0 && task) {
-      onUpdateTime(task.id, sessionSecondsRef.current);
-      sessionSecondsRef.current = 0;
+    // Flush accumulated time using timestamp-based calculation
+    if (sessionStartTimeRef.current > 0 && task) {
+      const sessionSeconds = Math.floor((Date.now() - sessionStartTimeRef.current) / 1000);
+      const totalElapsed = accumulatedTimeRef.current + sessionSeconds;
+      const delta = totalElapsed - lastFlushTimeRef.current;
+      if (delta > 0) {
+        onUpdateTime(task.id, delta);
+      }
+      // Reset refs
+      sessionStartTimeRef.current = 0;
+      accumulatedTimeRef.current = 0;
+      lastFlushTimeRef.current = 0;
     }
-
-    // Sync local time with task time just in case
-    // if (task) setTimeElapsed(task.timeSpent); // Removed to prevent resetting to stale state
     
     setShowTimer(false);
     // Exit Focus Mode

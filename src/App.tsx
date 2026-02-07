@@ -128,7 +128,7 @@ export default function App() {
   const darkMode = theme === 'dark';
   const currentTheme = THEMES[theme];
 
-  // Check for existing session on mount
+  // Check for existing session and restore app state on mount
   useEffect(() => {
     const checkSession = async () => {
       try {
@@ -137,6 +137,28 @@ export default function App() {
           setAuthResponse(session);
           setAccessToken(session.accessToken);
         }
+        
+        // Restore App State (Focus Mode / Window Size)
+        try {
+          // Add a small delay to ensure Electron main process is ready? 
+          // No, IPC should be ready.
+          if (window.electron && window.electron.getAppState) {
+            const state = await window.electron.getAppState();
+            console.log('Restoring app state:', state);
+            if (state.isFocusMode) {
+              setIsMinimized(state.focusMinimized);
+              // Ensure we are in focus view
+              setView('focus');
+              // Note: currentTaskId needs to be restored too, but main process doesn't verify task existence.
+              // We rely on getFilteredTasks to select a task, or we should persist currentTaskId in store too.
+              // For now, if we are in focus mode, we assume the user was working on the first available task 
+              // or let the existing useEffect selection logic handle it.
+            }
+          }
+        } catch (err) {
+          console.error('Failed to restore app state:', err);
+        }
+
       } catch (error) {
         console.error('Failed to check session:', error);
       } finally {
