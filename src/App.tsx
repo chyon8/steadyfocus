@@ -517,27 +517,29 @@ export default function App() {
   };
 
   const completeTask = (id: string) => {
-    setTasks(prevTasks => {
-      const updatedTasks = prevTasks.map(task => {
-        if (task.id === id) {
-          return { ...task, completed: true, completedAt: new Date(), startedAt: undefined };
-        }
-        return task;
-      });
-      
-      // Calculate next task from updated state
-      const filteredTasks = getFilteredTasks(updatedTasks);
-      const currentIndex = filteredTasks.findIndex(t => t.id === id);
-      if (currentIndex < filteredTasks.length - 1) {
-        setCurrentTaskId(filteredTasks[currentIndex + 1].id);
-      } else if (filteredTasks.length > 1) {
-        setCurrentTaskId(filteredTasks[0].id);
-      } else {
-        setCurrentTaskId(null);
+    // Calculate next task BEFORE updating state to avoid race condition
+    const updatedTasks = tasks.map(task => {
+      if (task.id === id) {
+        return { ...task, completed: true, completedAt: new Date(), startedAt: undefined };
       }
-      
-      return updatedTasks;
+      return task;
     });
+    
+    // Calculate next task from the future state
+    const filteredTasks = getFilteredTasks(updatedTasks);
+    const currentIndex = filteredTasks.findIndex(t => t.id === id);
+    
+    let nextTaskId: string | null = null;
+    if (currentIndex < filteredTasks.length - 1) {
+      nextTaskId = filteredTasks[currentIndex + 1].id;
+    } else if (filteredTasks.length > 1) {
+      nextTaskId = filteredTasks[0].id;
+    }
+    
+    // Update currentTaskId FIRST, then tasks
+    // This ensures FocusMode always has a valid task reference
+    setCurrentTaskId(nextTaskId);
+    setTasks(updatedTasks);
   };
 
   const deleteTask = async (id: string) => {
