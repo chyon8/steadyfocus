@@ -165,7 +165,7 @@ export function AllTasksView({ tasks, onComplete, onDelete, onStart, onUpdateSch
             }`}
           >
             <Zap className="w-5 h-5" fill="currentColor" />
-            Start Slashing
+            Enter the zone
           </motion.button>
         )}
       </div>

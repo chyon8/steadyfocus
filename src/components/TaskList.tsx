@@ -133,7 +133,7 @@ export function TaskList({ tasks, currentTaskId, onComplete, onDelete, onStart, 
           }`}
         >
           <Zap className="w-5 h-5" fill="currentColor" />
-          {selectedTaskIds.length > 0 ? `Start ${selectedTaskIds.length} Selected` : 'Start Slashing'}
+          {selectedTaskIds.length > 0 ? `Start ${selectedTaskIds.length} Selected` : 'Enter the zone'}
         </motion.button>
 
         {/* Mark Done Button - only show when tasks are selected */}
