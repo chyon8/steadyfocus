@@ -102,8 +102,8 @@ export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpd
         <div 
           {...attributes}
           {...listeners}
-          className={`mt-0.5 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity ${
-            darkMode ? 'text-white/20' : 'text-black/20'
+          className={`mt-0.5 cursor-grab active:cursor-grabbing opacity-30 group-hover:opacity-100 transition-opacity ${
+            darkMode ? 'text-white/40' : 'text-black/30'
           }`}
         >
           <GripVertical className="w-4 h-4" />
@@ -265,10 +265,10 @@ export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpd
               e.stopPropagation();
               onReschedule(task.id);
             }}
-            className={`opacity-0 group-hover:opacity-100 p-2 rounded-md transition-all ${
+            className={`opacity-30 group-hover:opacity-100 p-2 rounded-md transition-all ${
               darkMode
-                ? 'hover:bg-white/[0.06] text-white/20 hover:text-white/50'
-                : 'hover:bg-black/[0.04] text-black/20 hover:text-black/50'
+                ? 'hover:bg-white/[0.06] text-white/60 hover:text-white'
+                : 'hover:bg-black/[0.04] text-black/60 hover:text-black'
             }`}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
@@ -284,10 +284,10 @@ export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpd
             e.stopPropagation();
             handleComplete();
           }}
-          className={`opacity-0 group-hover:opacity-100 p-2 rounded-md transition-all ${
+          className={`opacity-30 group-hover:opacity-100 p-2 rounded-md transition-all ${
             darkMode
-              ? 'hover:bg-white/[0.06] text-white/20 hover:text-white/50'
-              : 'hover:bg-black/[0.04] text-black/20 hover:text-black/50'
+              ? 'hover:bg-white/[0.06] text-white/60 hover:text-white'
+              : 'hover:bg-black/[0.04] text-black/60 hover:text-black'
           }`}
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
@@ -304,10 +304,10 @@ export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpd
                 onClick={(e) => {
                   e.stopPropagation();
                 }}
-                className={`opacity-0 group-hover:opacity-100 p-2 rounded-md transition-all ${
+                className={`opacity-30 group-hover:opacity-100 p-2 rounded-md transition-all ${
                   darkMode
-                    ? 'hover:bg-white/[0.06] text-white/20 hover:text-white/50'
-                    : 'hover:bg-black/[0.04] text-black/20 hover:text-black/50'
+                    ? 'hover:bg-white/[0.06] text-white/60 hover:text-white'
+                    : 'hover:bg-black/[0.04] text-black/60 hover:text-black'
                 }`}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
@@ -345,10 +345,10 @@ export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpd
             e.stopPropagation();
             onDelete(task.id);
           }}
-            className={`opacity-0 group-hover:opacity-100 p-2 rounded-md transition-all ${
+            className={`opacity-30 group-hover:opacity-100 p-2 rounded-md transition-all ${
               darkMode
-                ? 'hover:bg-white/[0.06] text-white/20 hover:text-white/50'
-                : 'hover:bg-black/[0.04] text-black/20 hover:text-black/50'
+                ? 'hover:bg-white/[0.06] text-white/60 hover:text-white'
+                : 'hover:bg-black/[0.04] text-black/60 hover:text-black'
             }`}
         >
           <Trash2 className="w-3.5 h-3.5" />
