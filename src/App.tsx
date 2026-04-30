@@ -736,7 +736,7 @@ export default function App() {
   if (isLoading) {
     return (
       <div className={`min-h-screen flex items-center justify-center ${
-        darkMode ? 'bg-black' : 'bg-white'
+        darkMode ? 'bg-app-dark' : 'bg-white'
       }`}>
         <Circle className={`w-8 h-8 animate-spin ${
           darkMode ? 'text-white' : 'text-black'
@@ -753,7 +753,7 @@ export default function App() {
   return (
     <div className={`min-h-screen transition-colors duration-700 ${
       darkMode 
-        ? 'bg-black' 
+        ? 'bg-app-dark' 
         : 'bg-white'
     }`}>
       {/* Grain Texture */}
@@ -770,7 +770,7 @@ export default function App() {
             style={{
               backdropFilter: 'blur(20px)',
               WebkitBackdropFilter: 'blur(20px)',
-              backgroundColor: darkMode ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+              backgroundColor: darkMode ? 'rgba(22, 22, 24, 0.8)' : 'rgba(255, 255, 255, 0.8)',
               borderBottom: darkMode ? '1px solid rgba(255, 255, 255, 0.06)' : '1px solid rgba(0, 0, 0, 0.06)',
               WebkitAppRegion: 'drag',
             } as React.CSSProperties}
@@ -791,7 +791,7 @@ export default function App() {
                   transition={{ type: "spring", stiffness: 500, damping: 40 }}
                 >
                   <div className={`w-6 h-6 rounded-md flex items-center justify-center ${
-                    darkMode ? 'bg-white' : 'bg-black'
+                    darkMode ? 'bg-white opacity-90' : 'bg-black'
                   }`}>
                     <Circle className={`w-2.5 h-2.5 ${
                       darkMode ? 'text-black' : 'text-white'
@@ -933,7 +933,7 @@ export default function App() {
                               <motion.div
                                 layoutId="filter"
                                 className={`absolute inset-0 rounded-md ${
-                                  darkMode ? 'bg-white' : 'bg-black'
+                                  darkMode ? 'bg-white opacity-90' : 'bg-black'
                                 }`}
                                 transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
                               />
@@ -1067,12 +1067,13 @@ export default function App() {
         >
           <div className={`flex items-center gap-6 px-6 py-3 rounded-full border ${
             darkMode
-              ? 'bg-black/80 border-white/[0.06]'
-              : 'bg-white/80 border-black/[0.06]'
+              ? 'border-white/[0.06]'
+              : 'border-black/[0.06]'
           }`}
             style={{
               backdropFilter: 'blur(20px)',
               WebkitBackdropFilter: 'blur(20px)',
+              backgroundColor: darkMode ? 'rgba(22, 22, 24, 0.8)' : 'rgba(255, 255, 255, 0.8)',
             }}
           >
             <div className={`flex items-center gap-2 text-[9px] uppercase tracking-[0.15em] ${

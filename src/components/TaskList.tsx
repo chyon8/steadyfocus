@@ -128,7 +128,7 @@ export function TaskList({ tasks, currentTaskId, onComplete, onDelete, onStart, 
           whileTap={{ scale: 0.99 }}
           className={`w-full h-16 rounded-xl font-medium uppercase tracking-[0.15em] text-sm flex items-center justify-center gap-3 transition-all ${
             darkMode
-              ? 'bg-white text-black hover:bg-white/95'
+              ? 'bg-white opacity-90 text-black hover:opacity-100'
               : 'bg-black text-white hover:bg-black/95'
           }`}
         >

@@ -3436,3 +3436,7 @@ html {
     display: block;
   }
 }
+
+.bg-app-dark {
+  background-color: #161618;
+}
