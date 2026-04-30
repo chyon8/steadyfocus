@@ -140,34 +140,6 @@ export function AllTasksView({ tasks, onComplete, onDelete, onStart, onUpdateSch
           </div>
         )}
 
-        {/* Start Slashing Button */}
-        {allIncompleteTasks.length > 0 && (
-          <motion.button
-            onClick={() => {
-              const firstTask = allIncompleteTasks[0];
-              if (firstTask) {
-                onStart(firstTask.id);
-              }
-            }}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ 
-              delay: groupedTasks.length * 0.1 + 0.2,
-              duration: 0.4,
-              ease: [0.16, 1, 0.3, 1]
-            }}
-            whileHover={{ scale: 1.01, y: -2 }}
-            whileTap={{ scale: 0.99 }}
-            className={`w-full h-16 rounded-xl font-medium uppercase tracking-[0.15em] text-sm flex items-center justify-center gap-3 transition-all ${
-              darkMode
-                ? 'bg-white text-black hover:bg-white/95'
-                : 'bg-black text-white hover:bg-black/95'
-            }`}
-          >
-            <Zap className="w-5 h-5" fill="currentColor" />
-            Enter the zone
-          </motion.button>
-        )}
       </div>
     </DndProvider>
   );

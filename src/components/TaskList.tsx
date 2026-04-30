@@ -104,56 +104,6 @@ export function TaskList({ tasks, currentTaskId, onComplete, onDelete, onStart, 
             </AnimatePresence>
           </SortableContext>
         </div>
-
-        {/* Start Slashing Button */}
-        <motion.button
-          onClick={() => {
-            if (onStartSelected && selectedTaskIds.length > 0) {
-              onStartSelected();
-            } else {
-              const firstTask = tasks[0];
-              if (firstTask) {
-                onStart(firstTask.id);
-              }
-            }
-          }}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ 
-            delay: Math.min(tasks.length * 0.03, 0.3) + 0.1,
-            duration: 0.4,
-            ease: [0.16, 1, 0.3, 1]
-          }}
-          whileHover={{ scale: 1.01, y: -2 }}
-          whileTap={{ scale: 0.99 }}
-          className={`w-full h-16 rounded-xl font-medium uppercase tracking-[0.15em] text-sm flex items-center justify-center gap-3 transition-all ${
-            darkMode
-              ? 'bg-white opacity-90 text-black hover:opacity-100'
-              : 'bg-black text-white hover:bg-black/95'
-          }`}
-        >
-          <Zap className="w-5 h-5" fill="currentColor" />
-          {selectedTaskIds.length > 0 ? `Start ${selectedTaskIds.length} Selected` : 'Enter the zone'}
-        </motion.button>
-
-        {/* Mark Done Button - only show when tasks are selected */}
-        {selectedTaskIds.length > 0 && onCompleteSelected && (
-          <motion.button
-            onClick={onCompleteSelected}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            whileHover={{ scale: 1.01, y: -2 }}
-            whileTap={{ scale: 0.99 }}
-            className={`w-full h-14 rounded-xl font-medium uppercase tracking-[0.15em] text-sm flex items-center justify-center gap-3 transition-all ${
-              darkMode
-                ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30 border border-green-500/30'
-                : 'bg-green-500/10 text-green-600 hover:bg-green-500/20 border border-green-500/20'
-            }`}
-          >
-            <CheckCircle2 className="w-5 h-5" />
-            Mark {selectedTaskIds.length} Done
-          </motion.button>
-        )}
       </div>
     </DndContext>
   );

@@ -9,7 +9,7 @@ import { HistoryView } from './components/HistoryView';
 import { OverdueSection } from './components/OverdueSection';
 import { AuthScreen } from './components/AuthScreen';
 import { LeftSideWidget, RightSideWidget } from './components/SideWidgets';
-import { Circle, Palette, LogOut } from 'lucide-react';
+import { Circle, Palette, LogOut, Zap, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { tasksApi, settingsApi, setAccessToken } from './utils/api';
 import { signUp, signIn, signOut, getSession, type AuthResponse } from './utils/supabase/client';
@@ -909,12 +909,12 @@ export default function App() {
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
               >
-                <div className="flex justify-center gap-8 items-start">
+                <div className="flex justify-center gap-8 items-start relative">
                   {/* Left spacer - visible only on wide screens */}
-                  <div className="side-widget" />
+                  <div className="side-widget hidden lg:block w-[240px]" />
 
                   {/* Center - Main Task List */}
-                  <div className="w-full max-w-[680px] space-y-6">
+                  <div className="w-full max-w-[680px] space-y-6 pb-32">
                     {/* Filter + Inline Stats */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -1020,7 +1020,85 @@ export default function App() {
                   </div>
 
                   {/* Right spacer - visible only on wide screens */}
-                  <div className="side-widget" />
+                  <div className="side-widget hidden lg:block w-[240px]">
+                    <div className="sticky top-32">
+                      <div className={`p-6 rounded-2xl border ${darkMode ? 'border-white/[0.06] bg-white/[0.02]' : 'border-black/[0.06] bg-black/[0.02]'}`}>
+                        <h3 className={`text-[10px] uppercase tracking-[0.15em] font-medium mb-6 ${darkMode ? 'text-white/40' : 'text-black/40'}`}>Keyboard Shortcuts</h3>
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between text-[11px]">
+                            <span className={darkMode ? 'text-white/40' : 'text-black/40'}>New Task</span>
+                            <kbd className={`px-2 py-1 rounded font-sans ${darkMode ? 'bg-white/[0.06] text-white/60' : 'bg-black/[0.04] text-black/60'}`}>⌘K</kbd>
+                          </div>
+                          <div className="flex items-center justify-between text-[11px]">
+                            <span className={darkMode ? 'text-white/40' : 'text-black/40'}>Complete</span>
+                            <kbd className={`px-2 py-1 rounded font-sans ${darkMode ? 'bg-white/[0.06] text-white/60' : 'bg-black/[0.04] text-black/60'}`}>Space</kbd>
+                          </div>
+                          <div className="flex items-center justify-between text-[11px]">
+                            <span className={darkMode ? 'text-white/40' : 'text-black/40'}>Navigate</span>
+                            <kbd className={`px-2 py-1 rounded font-sans ${darkMode ? 'bg-white/[0.06] text-white/60' : 'bg-black/[0.04] text-black/60'}`}>1-4</kbd>
+                          </div>
+                          <div className="flex items-center justify-between text-[11px]">
+                            <span className={darkMode ? 'text-white/40' : 'text-black/40'}>Theme</span>
+                            <kbd className={`px-2 py-1 rounded font-sans ${darkMode ? 'bg-white/[0.06] text-white/60' : 'bg-black/[0.04] text-black/60'}`}>T</kbd>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Fixed Bottom Action Bar */}
+                <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-full max-w-[680px] z-50 px-6 sm:px-0">
+                  <div className="flex flex-col gap-2">
+                    <AnimatePresence>
+                      {selectedTaskIds.length > 0 && (
+                        <motion.button
+                          key="mark-done"
+                          onClick={completeSelectedTasks}
+                          initial={{ opacity: 0, y: 10, height: 0 }}
+                          animate={{ opacity: 1, y: 0, height: 56 }}
+                          exit={{ opacity: 0, y: 10, height: 0 }}
+                          whileHover={{ scale: 1.01, y: -2 }}
+                          whileTap={{ scale: 0.99 }}
+                          className={`w-full rounded-xl font-medium uppercase tracking-[0.15em] text-sm flex items-center justify-center gap-3 transition-colors shadow-lg overflow-hidden ${
+                            darkMode
+                              ? 'bg-[#161618] text-green-400 hover:bg-[#1c1c1e] border border-green-500/30'
+                              : 'bg-white text-green-600 hover:bg-gray-50 border border-green-500/20'
+                          }`}
+                        >
+                          <CheckCircle2 className="w-5 h-5" />
+                          Mark {selectedTaskIds.length} Done
+                        </motion.button>
+                      )}
+                    </AnimatePresence>
+
+                    {((filter === 'all' ? tasks.filter(t => !t.completed).length : filteredTasks.length) > 0 || selectedTaskIds.length > 0) && (
+                      <motion.button
+                        onClick={() => {
+                          if (selectedTaskIds.length > 0) {
+                            startSelectedTasks();
+                          } else {
+                            const firstTask = filter === 'all' ? tasks.filter(t => !t.completed)[0] : filteredTasks[0];
+                            if (firstTask) {
+                              startTask(firstTask.id);
+                            }
+                          }
+                        }}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        whileHover={{ scale: 1.01, y: -2 }}
+                        whileTap={{ scale: 0.99 }}
+                        className={`w-full h-16 rounded-xl font-medium uppercase tracking-[0.15em] text-sm flex items-center justify-center gap-3 transition-colors shadow-2xl ${
+                          darkMode
+                            ? 'bg-white text-black hover:bg-white/95'
+                            : 'bg-black text-white hover:bg-black/95'
+                        }`}
+                      >
+                        <Zap className="w-5 h-5" fill="currentColor" />
+                        {selectedTaskIds.length > 0 ? `Start ${selectedTaskIds.length} Selected` : 'Enter the zone'}
+                      </motion.button>
+                    )}
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -1057,52 +1135,7 @@ export default function App() {
         </div>
       </main>
 
-      {/* Footer Hints */}
-      {!isMinimized && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
-          className="fixed bottom-8 left-1/2 -translate-x-1/2"
-        >
-          <div className={`flex items-center gap-6 px-6 py-3 rounded-full border ${
-            darkMode
-              ? 'border-white/[0.06]'
-              : 'border-black/[0.06]'
-          }`}
-            style={{
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-              backgroundColor: darkMode ? 'rgba(22, 22, 24, 0.8)' : 'rgba(255, 255, 255, 0.8)',
-            }}
-          >
-            <div className={`flex items-center gap-2 text-[9px] uppercase tracking-[0.15em] ${
-              darkMode ? 'text-white/25' : 'text-black/25'
-            }`}>
-              <kbd className={`px-2 py-1 rounded ${
-                darkMode ? 'bg-white/[0.06]' : 'bg-black/[0.04]'
-              }`}>⌘N</kbd>
-              <span>New</span>
-            </div>
-            <div className={`flex items-center gap-2 text-[9px] uppercase tracking-[0.15em] ${
-              darkMode ? 'text-white/25' : 'text-black/25'
-            }`}>
-              <kbd className={`px-2 py-1 rounded ${
-                darkMode ? 'bg-white/[0.06]' : 'bg-black/[0.04]'
-              }`}>Space</kbd>
-              <span>Done</span>
-            </div>
-            <div className={`flex items-center gap-2 text-[9px] uppercase tracking-[0.15em] ${
-              darkMode ? 'text-white/25' : 'text-black/25'
-            }`}>
-              <kbd className={`px-2 py-1 rounded ${
-                darkMode ? 'bg-white/[0.06]' : 'bg-black/[0.04]'
-              }`}>1-3</kbd>
-              <span>Navigate</span>
-            </div>
-          </div>
-        </motion.div>
-      )}
+      {/* Footer Hints (Removed as they are now in the sidebar) */}
 
       {/* Deletion Confirmation Modal */}
       <AlertDialog open={!!taskToDelete} onOpenChange={(open) => !open && setTaskToDelete(null)}>
