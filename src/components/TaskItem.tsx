@@ -97,7 +97,7 @@ export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpd
       }`}
     >
 
-      <div className="p-5 flex items-start gap-4">
+      <div className="p-4 flex items-start gap-4">
         {/* Drag Handle */}
         <div 
           {...attributes}
@@ -133,8 +133,8 @@ export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpd
                   ? 'border-white/60'
                   : 'border-black/60'
                 : darkMode
-                  ? 'border-white/20 group-hover:border-white/40'
-                  : 'border-black/20 group-hover:border-black/40'
+                  ? 'border-white/30 group-hover:border-white/50'
+                  : 'border-black/30 group-hover:border-black/50'
           }`}>
             {!onToggleSelect && (
               <Circle className={`w-1.5 h-1.5 opacity-0 group-hover:opacity-100 transition-opacity ${
@@ -145,7 +145,7 @@ export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpd
         </motion.button>
         
         <div className="flex-1 min-w-0 overflow-hidden">
-          <div className="relative mb-2 overflow-hidden">
+          <div className="relative mb-1 overflow-hidden">
             {isEditing ? (
               <input
                 autoFocus
@@ -226,7 +226,7 @@ export function TaskItem({ task, isCurrent, onComplete, onDelete, onStart, onUpd
           {/* Meta */}
           {(task.timeSpent > 0 || task.scheduledDate || task.recurring) && (
             <div className={`flex items-center gap-4 text-[9px] uppercase tracking-[0.12em] ${
-              darkMode ? 'text-white/20' : 'text-black/20'
+              darkMode ? 'text-white/40' : 'text-black/40'
             }`}>
               {task.timeSpent > 0 && (
                 <div className="flex items-center gap-1.5">

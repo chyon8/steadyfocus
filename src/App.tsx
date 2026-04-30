@@ -948,8 +948,8 @@ export default function App() {
                           onClick={() => setFilter(f)}
                           className={`relative px-5 py-2 text-[10px] font-medium uppercase tracking-[0.15em] transition-colors ${
                             filter === f
-                              ? darkMode ? 'text-white' : 'text-black'
-                              : darkMode ? 'text-white/25 hover:text-white/50' : 'text-black/25 hover:text-black/50'
+                              ? darkMode ? 'text-black' : 'text-white'
+                              : darkMode ? 'text-white/30 hover:text-white/60' : 'text-black/30 hover:text-black/60'
                           }`}
                           whileHover={{ y: -1 }}
                         >
@@ -957,7 +957,7 @@ export default function App() {
                             <motion.div
                               layoutId="filter"
                               className={`absolute inset-0 rounded-md ${
-                                darkMode ? 'bg-white/[0.06]' : 'bg-black/[0.04]'
+                                darkMode ? 'bg-white' : 'bg-black'
                               }`}
                               transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
                             />
