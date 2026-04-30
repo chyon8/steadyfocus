@@ -266,7 +266,7 @@ export function AddTaskForm({ onAdd, darkMode }: AddTaskFormProps) {
         WebkitBackdropFilter: 'blur(20px)',
       }}
     >
-      <div className="relative">
+      <div>
         <form onSubmit={(e) => {
           e.preventDefault();
           if (dateSuggestions.length > 0) {
@@ -279,7 +279,7 @@ export function AddTaskForm({ onAdd, darkMode }: AddTaskFormProps) {
             <input
               ref={inputRef}
               type="text"
-              placeholder="New task... (try @today, @1225, @내일)"
+              placeholder="할 일을 입력하세요..."
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               onFocus={() => setShowDatePicker(true)}
@@ -307,158 +307,157 @@ export function AddTaskForm({ onAdd, darkMode }: AddTaskFormProps) {
           </div>
         </form>
 
-        {/* Date Suggestions Dropdown */}
+        {/* Date Suggestions - inline flow */}
         <AnimatePresence>
           {dateSuggestions.length > 0 && title.trim() && (
             <motion.div
-              initial={{ opacity: 0, y: -10, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10, scale: 0.95 }}
-              transition={{ duration: 0.15 }}
-              className={`absolute top-full left-0 right-0 mt-2 rounded-xl border shadow-2xl z-50 overflow-hidden ${
-                darkMode
-                  ? 'bg-black border-white/[0.06]'
-                  : 'bg-white border-black/[0.06]'
-              }`}
-              style={{
-                backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
-              }}
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              className="overflow-hidden"
             >
-              <div className={`px-4 py-3 border-b ${
+              <div className={`border-t ${
                 darkMode ? 'border-white/[0.06]' : 'border-black/[0.06]'
               }`}>
-                <div className="flex items-center gap-2">
-                  <Sparkles className={`w-3 h-3 ${
-                    darkMode ? 'text-white/40' : 'text-black/40'
-                  }`} />
-                  <div className={`text-[9px] uppercase tracking-[0.15em] ${
-                    darkMode ? 'text-white/40' : 'text-black/40'
-                  }`}>
-                    Date suggestions
+                <div className={`px-4 py-3 border-b flex items-center justify-between ${
+                  darkMode ? 'border-white/[0.06]' : 'border-black/[0.06]'
+                }`}>
+                  <div className="flex items-center gap-2">
+                    <Sparkles className={`w-3 h-3 ${
+                      darkMode ? 'text-white/40' : 'text-black/40'
+                    }`} />
+                    <div className={`text-[9px] uppercase tracking-[0.15em] ${
+                      darkMode ? 'text-white/40' : 'text-black/40'
+                    }`}>
+                      Date suggestions
+                    </div>
+                  </div>
+                  <div className={`text-[10px] ${darkMode ? 'text-white/40' : 'text-black/40'}`}>
+                    💡 @를 입력해 날짜 지정
                   </div>
                 </div>
-              </div>
-              
-              <div className="p-2">
-                {dateSuggestions.map((suggestion, index) => (
-                  <motion.button
-                    key={suggestion.label}
-                    type="button"
-                    onClick={() => acceptSuggestion(suggestion)}
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
-                    className={`w-full px-4 py-3 rounded-lg transition-all flex items-center justify-between ${
-                      index === selectedSuggestionIndex
-                        ? darkMode
-                          ? 'bg-white text-black'
-                          : 'bg-black text-white'
-                        : darkMode
-                          ? 'hover:bg-white/[0.08] text-white'
-                          : 'hover:bg-black/[0.06] text-black'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`text-sm font-medium ${
+                
+                <div className="p-2">
+                  {dateSuggestions.map((suggestion, index) => (
+                    <motion.button
+                      key={suggestion.label}
+                      type="button"
+                      onClick={() => acceptSuggestion(suggestion)}
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                      className={`w-full px-4 py-3 rounded-lg transition-all flex items-center justify-between ${
                         index === selectedSuggestionIndex
-                          ? darkMode ? 'text-black' : 'text-white'
-                          : darkMode ? 'text-white' : 'text-black'
-                      }`}>
-                        {suggestion.label}
+                          ? darkMode
+                            ? 'bg-white text-black'
+                            : 'bg-black text-white'
+                          : darkMode
+                            ? 'hover:bg-white/[0.08] text-white'
+                            : 'hover:bg-black/[0.06] text-black'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`text-sm font-medium ${
+                          index === selectedSuggestionIndex
+                            ? darkMode ? 'text-black' : 'text-white'
+                            : darkMode ? 'text-white' : 'text-black'
+                        }`}>
+                          {suggestion.label}
+                        </div>
+                        <div className={`text-[10px] ${
+                          index === selectedSuggestionIndex
+                            ? darkMode ? 'text-black/50' : 'text-white/50'
+                            : darkMode ? 'text-white/40' : 'text-black/40'
+                        }`}>
+                          {format(suggestion.date, 'MMM d, EEE')}
+                        </div>
                       </div>
-                      <div className={`text-[10px] ${
-                        index === selectedSuggestionIndex
-                          ? darkMode ? 'text-black/50' : 'text-white/50'
-                          : darkMode ? 'text-white/40' : 'text-black/40'
-                      }`}>
-                        {format(suggestion.date, 'MMM d, EEE')}
-                      </div>
-                    </div>
-                    {index === selectedSuggestionIndex && (
-                      <div className={`text-[9px] uppercase tracking-wider px-2 py-1 rounded ${
-                        darkMode 
-                          ? 'bg-black/10 text-black/60'
-                          : 'bg-white/20 text-white/60'
-                      }`}>
-                        Tab
-                      </div>
-                    )}
-                  </motion.button>
-                ))}
+                      {index === selectedSuggestionIndex && (
+                        <div className={`text-[9px] uppercase tracking-wider px-2 py-1 rounded ${
+                          darkMode 
+                            ? 'bg-black/10 text-black/60'
+                            : 'bg-white/20 text-white/60'
+                        }`}>
+                          Tab
+                        </div>
+                      )}
+                    </motion.button>
+                  ))}
+                </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-       {/* Smart Date Picker Popover - FINAL FIX */}
+        {/* Smart Date Picker - inline flow */}
         <AnimatePresence>
           {showDatePicker && title.trim() && dateSuggestions.length === 0 && (
             <motion.div
               ref={datePickerRef}
-              initial={{ opacity: 0, y: -10, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10, scale: 0.95 }}
-              transition={{ duration: 0.2 }}
-              // [수정 포인트] overflow-hidden 추가! -> 이게 있어야 자식 요소가 부모를 뚫고 나가는걸 막습니다.
-              className={`absolute top-full left-0 w-full z-50 mt-2 p-4 rounded-xl border shadow-2xl overflow-hidden ${
-                darkMode
-                  ? 'bg-black border-white/[0.06]'
-                  : 'bg-white border-black/[0.06]'
-              }`}
-              style={{
-                backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
-              }}
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              className="overflow-hidden"
             >
-              <div className={`text-[9px] uppercase tracking-[0.15em] mb-3 ${
-                darkMode ? 'text-white/40' : 'text-black/40'
+              <div className={`border-t p-4 ${
+                darkMode ? 'border-white/[0.06]' : 'border-black/[0.06]'
               }`}>
-                Schedule for
-              </div>
-              
-              <div 
-                className="date-scroll-container flex overflow-x-auto gap-2 pb-1 -mx-4 pl-6 pr-4 snap-x snap-mandatory w-full"
-                style={{
-                  scrollbarWidth: 'none',
-                  msOverflowStyle: 'none',
-                }}
-              >
-                <style>{`
-                  .date-scroll-container::-webkit-scrollbar {
-                    display: none;
-                  }
-                `}</style>
+                <div className="flex items-center justify-between mb-3">
+                  <div className={`text-[9px] uppercase tracking-[0.15em] ${
+                    darkMode ? 'text-white/40' : 'text-black/40'
+                  }`}>
+                    Schedule for
+                  </div>
+                  <div className={`text-[10px] ${darkMode ? 'text-white/40' : 'text-black/40'}`}>
+                    💡 @오늘, @1225 로 자동 지정
+                  </div>
+                </div>
                 
-                {quickDates.map((date, index) => {
-                  const isToday = index === 0;
-                  const isSelected = selectedQuickDate?.getTime() === date.getTime();
-                  return (
-                    <button
-                      key={index}
-                      type="button"
-                      onClick={() => {
-                        setSelectedQuickDate(date);
-                        handleQuickAdd(date);
-                      }}
-                      className={`flex-shrink-0 snap-center min-w-[3.5rem] px-2 py-3 rounded-lg transition-all flex flex-col items-center justify-center ${
-                        isSelected || (isToday && !selectedQuickDate)
-                          ? darkMode
-                            ? 'bg-white text-black'
-                            : 'bg-black text-white'
-                          : darkMode
-                            ? 'bg-white/[0.06] hover:bg-white/[0.12] text-white'
-                            : 'bg-black/[0.06] hover:bg-black/[0.12] text-black'
-                      }`}
-                    >
-                      <div className="text-[9px] uppercase tracking-wider mb-0.5 opacity-60">
-                        {format(date, 'EEE')}
-                      </div>
-                      <div className="text-sm font-medium">
-                        {format(date, 'd')}
-                      </div>
-                    </button>
-                  );
-                })}
+                <div 
+                  className="date-scroll-container flex overflow-x-auto gap-2 pb-1 snap-x snap-mandatory w-full"
+                  style={{
+                    scrollbarWidth: 'none',
+                    msOverflowStyle: 'none',
+                  }}
+                >
+                  <style>{`
+                    .date-scroll-container::-webkit-scrollbar {
+                      display: none;
+                    }
+                  `}</style>
+                  
+                  {quickDates.map((date, index) => {
+                    const isToday = index === 0;
+                    const isSelected = selectedQuickDate?.getTime() === date.getTime();
+                    return (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => {
+                          setSelectedQuickDate(date);
+                          handleQuickAdd(date);
+                        }}
+                        className={`flex-shrink-0 snap-center min-w-[3.5rem] px-2 py-3 rounded-lg transition-all flex flex-col items-center justify-center ${
+                          isSelected || (isToday && !selectedQuickDate)
+                            ? darkMode
+                              ? 'bg-white text-black'
+                              : 'bg-black text-white'
+                            : darkMode
+                              ? 'bg-white/[0.06] hover:bg-white/[0.12] text-white'
+                              : 'bg-black/[0.06] hover:bg-black/[0.12] text-black'
+                        }`}
+                      >
+                        <div className="text-[9px] uppercase tracking-wider mb-0.5 opacity-60">
+                          {format(date, 'EEE')}
+                        </div>
+                        <div className="text-sm font-medium">
+                          {format(date, 'd')}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </motion.div>
           )}

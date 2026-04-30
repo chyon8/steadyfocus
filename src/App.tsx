@@ -908,39 +908,9 @@ export default function App() {
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
               >
-                <div className="grid grid-cols-12 gap-12">
-                  {/* Left Column - Add Task */}
-                  <div className="col-span-4 space-y-8">
-                    <AddTaskForm onAdd={addTask} darkMode={darkMode} />
-                    
-                    {/* Stats Summary */}
-                    <div className={`p-8 rounded-xl border ${
-                      darkMode ? 'border-white/[0.06]' : 'border-black/[0.06]'
-                    }`}>
-                      <div className="space-y-6">
-                        <div>
-                          <div className={`text-4xl mb-1 ${
-                            darkMode ? 'text-white' : 'text-black'
-                          }`}>{completedToday}</div>
-                          <div className={`text-[10px] uppercase tracking-[0.15em] ${
-                            darkMode ? 'text-white/25' : 'text-black/25'
-                          }`}>Completed Today</div>
-                        </div>
-                        <div>
-                          <div className={`text-4xl mb-1 ${
-                            darkMode ? 'text-white' : 'text-black'
-                          }`}>{filteredTasks.length}</div>
-                          <div className={`text-[10px] uppercase tracking-[0.15em] ${
-                            darkMode ? 'text-white/25' : 'text-black/25'
-                          }`}>Remaining</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Right Column - Task List */}
-                  <div className="col-span-8 space-y-6">
-                    {/* Filter */}
+                <div className="max-w-[680px] mx-auto space-y-6">
+                  {/* Filter + Inline Stats */}
+                  <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       {(['today', 'all'] as const).map((f) => (
                         <motion.button
@@ -968,53 +938,79 @@ export default function App() {
                         </motion.button>
                       ))}
                     </div>
-                    
-                    {filter === 'all' ? (
-                      <AllTasksView
-                        tasks={tasks}
+
+                    {/* Mini Stats Badges */}
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[18px] font-medium tabular-nums ${
+                          darkMode ? 'text-white' : 'text-black'
+                        }`}>{completedToday}</span>
+                        <span className={`text-[9px] uppercase tracking-[0.12em] ${
+                          darkMode ? 'text-white/25' : 'text-black/25'
+                        }`}>done</span>
+                      </div>
+                      <div className={`w-px h-4 ${
+                        darkMode ? 'bg-white/[0.08]' : 'bg-black/[0.08]'
+                      }`} />
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[18px] font-medium tabular-nums ${
+                          darkMode ? 'text-white' : 'text-black'
+                        }`}>{filteredTasks.length}</span>
+                        <span className={`text-[9px] uppercase tracking-[0.12em] ${
+                          darkMode ? 'text-white/25' : 'text-black/25'
+                        }`}>left</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Inline Add Task */}
+                  <AddTaskForm onAdd={addTask} darkMode={darkMode} />
+                  
+                  {filter === 'all' ? (
+                    <AllTasksView
+                      tasks={tasks}
+                      onComplete={completeTask}
+                       onDelete={deleteTask}
+                      onStart={startTask}
+                      onUpdateSchedule={updateTaskSchedule}
+                      onUpdateTitle={updateTaskTitle}
+                      darkMode={darkMode}
+                    />
+                  ) : (
+                    <>
+                      {/* Overdue Tasks Section */}
+                      <OverdueSection
+                        tasks={overdueTasks}
                         onComplete={completeTask}
-                         onDelete={deleteTask}
+                        onDelete={deleteTask}
                         onStart={startTask}
                         onUpdateSchedule={updateTaskSchedule}
                         onUpdateTitle={updateTaskTitle}
+                        onRescheduleToToday={rescheduleTaskToToday}
+                        onRescheduleAllToToday={rescheduleAllOverdueToToday}
                         darkMode={darkMode}
+                        selectedTaskIds={selectedTaskIds}
+                        onToggleSelect={toggleTaskSelection}
                       />
-                    ) : (
-                      <>
-                        {/* Overdue Tasks Section */}
-                        <OverdueSection
-                          tasks={overdueTasks}
-                          onComplete={completeTask}
-                          onDelete={deleteTask}
-                          onStart={startTask}
-                          onUpdateSchedule={updateTaskSchedule}
-                          onUpdateTitle={updateTaskTitle}
-                          onRescheduleToToday={rescheduleTaskToToday}
-                          onRescheduleAllToToday={rescheduleAllOverdueToToday}
-                          darkMode={darkMode}
-                          selectedTaskIds={selectedTaskIds}
-                          onToggleSelect={toggleTaskSelection}
-                        />
-                        
-                        {/* Today's Tasks */}
-                        <TaskList
-                          tasks={filteredTasks}
-                          currentTaskId={currentTaskId}
-                          onComplete={completeTask}
-                          onDelete={deleteTask}
-                          onStart={startTask}
-                          onUpdateSchedule={updateTaskSchedule}
-                          onUpdateTitle={updateTaskTitle}
-                          onReorder={reorderTasks}
-                          darkMode={darkMode}
-                          selectedTaskIds={selectedTaskIds}
-                          onToggleSelect={toggleTaskSelection}
-                          onStartSelected={startSelectedTasks}
-                          onCompleteSelected={completeSelectedTasks}
-                        />
-                      </>
-                    )}
-                  </div>
+                      
+                      {/* Today's Tasks */}
+                      <TaskList
+                        tasks={filteredTasks}
+                        currentTaskId={currentTaskId}
+                        onComplete={completeTask}
+                        onDelete={deleteTask}
+                        onStart={startTask}
+                        onUpdateSchedule={updateTaskSchedule}
+                        onUpdateTitle={updateTaskTitle}
+                        onReorder={reorderTasks}
+                        darkMode={darkMode}
+                        selectedTaskIds={selectedTaskIds}
+                        onToggleSelect={toggleTaskSelection}
+                        onStartSelected={startSelectedTasks}
+                        onCompleteSelected={completeSelectedTasks}
+                      />
+                    </>
+                  )}
                 </div>
               </motion.div>
             )}
