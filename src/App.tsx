@@ -8,6 +8,7 @@ import { AddTaskForm } from './components/AddTaskForm';
 import { HistoryView } from './components/HistoryView';
 import { OverdueSection } from './components/OverdueSection';
 import { AuthScreen } from './components/AuthScreen';
+import { LeftSideWidget, RightSideWidget } from './components/SideWidgets';
 import { Circle, Palette, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { tasksApi, settingsApi, setAccessToken } from './utils/api';
@@ -908,109 +909,118 @@ export default function App() {
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
               >
-                <div className="max-w-[680px] mx-auto space-y-6">
-                  {/* Filter + Inline Stats */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {(['today', 'all'] as const).map((f) => (
-                        <motion.button
-                          key={f}
-                          onClick={() => setFilter(f)}
-                          className={`relative px-5 py-2 text-[10px] font-medium uppercase tracking-[0.15em] transition-colors ${
-                            filter === f
-                              ? darkMode ? 'text-black' : 'text-white'
-                              : darkMode ? 'text-white/30 hover:text-white/60' : 'text-black/30 hover:text-black/60'
-                          }`}
-                          whileHover={{ y: -1 }}
-                        >
-                          {filter === f && (
-                            <motion.div
-                              layoutId="filter"
-                              className={`absolute inset-0 rounded-md ${
-                                darkMode ? 'bg-white' : 'bg-black'
-                              }`}
-                              transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
-                            />
-                          )}
-                          <span className="relative z-10">
-                            {f === 'today' ? 'Today' : 'All'}
-                          </span>
-                        </motion.button>
-                      ))}
+                <div className="flex justify-center gap-8 items-start">
+                  {/* Left spacer - visible only on wide screens */}
+                  <div className="side-widget" />
+
+                  {/* Center - Main Task List */}
+                  <div className="w-full max-w-[680px] space-y-6">
+                    {/* Filter + Inline Stats */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {(['today', 'all'] as const).map((f) => (
+                          <motion.button
+                            key={f}
+                            onClick={() => setFilter(f)}
+                            className={`relative px-5 py-2 text-[10px] font-medium uppercase tracking-[0.15em] transition-colors ${
+                              filter === f
+                                ? darkMode ? 'text-black' : 'text-white'
+                                : darkMode ? 'text-white/30 hover:text-white/60' : 'text-black/30 hover:text-black/60'
+                            }`}
+                            whileHover={{ y: -1 }}
+                          >
+                            {filter === f && (
+                              <motion.div
+                                layoutId="filter"
+                                className={`absolute inset-0 rounded-md ${
+                                  darkMode ? 'bg-white' : 'bg-black'
+                                }`}
+                                transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
+                              />
+                            )}
+                            <span className="relative z-10">
+                              {f === 'today' ? 'Today' : 'All'}
+                            </span>
+                          </motion.button>
+                        ))}
+                      </div>
+
+                      {/* Mini Stats Badges */}
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
+                          <span className={`text-[18px] font-medium tabular-nums ${
+                            darkMode ? 'text-white' : 'text-black'
+                          }`}>{completedToday}</span>
+                          <span className={`text-[9px] uppercase tracking-[0.12em] ${
+                            darkMode ? 'text-white/25' : 'text-black/25'
+                          }`}>done</span>
+                        </div>
+                        <div className={`w-px h-4 ${
+                          darkMode ? 'bg-white/[0.08]' : 'bg-black/[0.08]'
+                        }`} />
+                        <div className="flex items-center gap-2">
+                          <span className={`text-[18px] font-medium tabular-nums ${
+                            darkMode ? 'text-white' : 'text-black'
+                          }`}>{filteredTasks.length}</span>
+                          <span className={`text-[9px] uppercase tracking-[0.12em] ${
+                            darkMode ? 'text-white/25' : 'text-black/25'
+                          }`}>left</span>
+                        </div>
+                      </div>
                     </div>
 
-                    {/* Mini Stats Badges */}
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-2">
-                        <span className={`text-[18px] font-medium tabular-nums ${
-                          darkMode ? 'text-white' : 'text-black'
-                        }`}>{completedToday}</span>
-                        <span className={`text-[9px] uppercase tracking-[0.12em] ${
-                          darkMode ? 'text-white/25' : 'text-black/25'
-                        }`}>done</span>
-                      </div>
-                      <div className={`w-px h-4 ${
-                        darkMode ? 'bg-white/[0.08]' : 'bg-black/[0.08]'
-                      }`} />
-                      <div className="flex items-center gap-2">
-                        <span className={`text-[18px] font-medium tabular-nums ${
-                          darkMode ? 'text-white' : 'text-black'
-                        }`}>{filteredTasks.length}</span>
-                        <span className={`text-[9px] uppercase tracking-[0.12em] ${
-                          darkMode ? 'text-white/25' : 'text-black/25'
-                        }`}>left</span>
-                      </div>
-                    </div>
+                    {/* Inline Add Task */}
+                    <AddTaskForm onAdd={addTask} darkMode={darkMode} />
+                    
+                    {filter === 'all' ? (
+                      <AllTasksView
+                        tasks={tasks}
+                        onComplete={completeTask}
+                         onDelete={deleteTask}
+                        onStart={startTask}
+                        onUpdateSchedule={updateTaskSchedule}
+                        onUpdateTitle={updateTaskTitle}
+                        darkMode={darkMode}
+                      />
+                    ) : (
+                      <>
+                        {/* Overdue Tasks Section */}
+                        <OverdueSection
+                          tasks={overdueTasks}
+                          onComplete={completeTask}
+                          onDelete={deleteTask}
+                          onStart={startTask}
+                          onUpdateSchedule={updateTaskSchedule}
+                          onUpdateTitle={updateTaskTitle}
+                          onRescheduleToToday={rescheduleTaskToToday}
+                          onRescheduleAllToToday={rescheduleAllOverdueToToday}
+                          darkMode={darkMode}
+                          selectedTaskIds={selectedTaskIds}
+                          onToggleSelect={toggleTaskSelection}
+                        />
+                        
+                        {/* Today's Tasks */}
+                        <TaskList
+                          tasks={filteredTasks}
+                          currentTaskId={currentTaskId}
+                          onComplete={completeTask}
+                          onDelete={deleteTask}
+                          onStart={startTask}
+                          onUpdateSchedule={updateTaskSchedule}
+                          onUpdateTitle={updateTaskTitle}
+                          onReorder={reorderTasks}
+                          darkMode={darkMode}
+                          selectedTaskIds={selectedTaskIds}
+                          onToggleSelect={toggleTaskSelection}
+                          onStartSelected={startSelectedTasks}
+                          onCompleteSelected={completeSelectedTasks}
+                        />
+                      </>
+                    )}
                   </div>
 
-                  {/* Inline Add Task */}
-                  <AddTaskForm onAdd={addTask} darkMode={darkMode} />
-                  
-                  {filter === 'all' ? (
-                    <AllTasksView
-                      tasks={tasks}
-                      onComplete={completeTask}
-                       onDelete={deleteTask}
-                      onStart={startTask}
-                      onUpdateSchedule={updateTaskSchedule}
-                      onUpdateTitle={updateTaskTitle}
-                      darkMode={darkMode}
-                    />
-                  ) : (
-                    <>
-                      {/* Overdue Tasks Section */}
-                      <OverdueSection
-                        tasks={overdueTasks}
-                        onComplete={completeTask}
-                        onDelete={deleteTask}
-                        onStart={startTask}
-                        onUpdateSchedule={updateTaskSchedule}
-                        onUpdateTitle={updateTaskTitle}
-                        onRescheduleToToday={rescheduleTaskToToday}
-                        onRescheduleAllToToday={rescheduleAllOverdueToToday}
-                        darkMode={darkMode}
-                        selectedTaskIds={selectedTaskIds}
-                        onToggleSelect={toggleTaskSelection}
-                      />
-                      
-                      {/* Today's Tasks */}
-                      <TaskList
-                        tasks={filteredTasks}
-                        currentTaskId={currentTaskId}
-                        onComplete={completeTask}
-                        onDelete={deleteTask}
-                        onStart={startTask}
-                        onUpdateSchedule={updateTaskSchedule}
-                        onUpdateTitle={updateTaskTitle}
-                        onReorder={reorderTasks}
-                        darkMode={darkMode}
-                        selectedTaskIds={selectedTaskIds}
-                        onToggleSelect={toggleTaskSelection}
-                        onStartSelected={startSelectedTasks}
-                        onCompleteSelected={completeSelectedTasks}
-                      />
-                    </>
-                  )}
+                  {/* Right spacer - visible only on wide screens */}
+                  <div className="side-widget" />
                 </div>
               </motion.div>
             )}
