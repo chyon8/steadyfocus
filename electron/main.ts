@@ -40,7 +40,7 @@ function createWindow() {
     height,
     x,
     y,
-    minWidth: isFocusMode ? 300 : 800,
+    minWidth: isFocusMode ? 300 : 400,
     minHeight: isFocusMode ? 45 : 600,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -189,7 +189,7 @@ app.whenReady().then(() => {
       if (originalBounds) {
         console.log('Restoring bounds:', originalBounds);
         // Restore min/max constraints before restoring bounds
-        mainWindow.setMinimumSize(800, 600);
+        mainWindow.setMinimumSize(400, 600);
         mainWindow.setMaximumSize(10000, 10000); // Remove max constraints
         mainWindow.setBounds(originalBounds, true); // Enable animation for smooth transition
         originalBounds = null; // Reset saved bounds

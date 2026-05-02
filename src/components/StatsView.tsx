@@ -176,7 +176,7 @@ export function StatsView({ tasks, darkMode, dailyGoal, onUpdateGoal }: StatsVie
   ];
 
   return (
-    <div className="space-y-12">
+    <div className="w-full min-w-[320px] max-w-[680px] mx-auto space-y-12 pb-32">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -192,7 +192,7 @@ export function StatsView({ tasks, darkMode, dailyGoal, onUpdateGoal }: StatsVie
       </motion.div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 stats-grid">
         {statCards.map((stat, index) => (
           <motion.div
             key={stat.label}

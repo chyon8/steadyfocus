@@ -9,7 +9,7 @@ import { HistoryView } from './components/HistoryView';
 import { OverdueSection } from './components/OverdueSection';
 import { AuthScreen } from './components/AuthScreen';
 import { LeftSideWidget, RightSideWidget } from './components/SideWidgets';
-import { Circle, Palette, LogOut, Zap, CheckCircle2 } from 'lucide-react';
+import { Circle, Palette, LogOut, Zap, CheckCircle2, Target, List, BarChart2, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { tasksApi, settingsApi, setAccessToken } from './utils/api';
 import { signUp, signIn, signOut, getSession, type AuthResponse } from './utils/supabase/client';
@@ -775,20 +775,19 @@ export default function App() {
               WebkitAppRegion: 'drag',
             } as React.CSSProperties}
           />
-          <div className="relative max-w-[1400px] mx-auto px-12 py-8" style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}>
+          <div className="relative max-w-[1400px] mx-auto px-12" style={{ WebkitAppRegion: 'drag', paddingBlock: '1.25rem' } as React.CSSProperties}>
             <div className="flex items-center justify-between">
-              {/* Left spacer for traffic light buttons */}
-              <div className="w-20" />
-              
-              {/* Center Navigation with Logo */}
-              <nav className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-1" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+              {/* Left Area: Spacer + Logo */}
+              <div className="w-32 flex-shrink-0 flex items-center">
+                <div className="w-16" />
                 {/* Logo */}
                 <motion.button
                   onClick={() => setView('focus')}
-                  className="flex items-center gap-2 group mr-4"
+                  className="flex items-center gap-2 group"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   transition={{ type: "spring", stiffness: 500, damping: 40 }}
+                  style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
                 >
                   <div className={`w-6 h-6 rounded-md flex items-center justify-center ${
                     darkMode ? 'bg-white opacity-90' : 'bg-black'
@@ -798,17 +797,21 @@ export default function App() {
                     } fill-current`} />
                   </div>
                 </motion.button>
+              </div>
+              
+              {/* Center Navigation with Tabs */}
+              <nav className="flex-1 flex items-center justify-center gap-1 overflow-x-auto no-scrollbar" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
 
                 {[
-                  { id: 'focus', label: 'Focus', key: '1' },
-                  { id: 'list', label: 'Plan', key: '2' },
-                  { id: 'stats', label: 'Stats', key: '3' },
-                  { id: 'history', label: 'History', key: '4' },
+                  { id: 'focus', label: 'Focus' },
+                  { id: 'list', label: 'Plan' },
+                  { id: 'stats', label: 'Stats' },
+                  { id: 'history', label: 'History' },
                 ].map((item) => (
                   <motion.button
                     key={item.id}
                     onClick={() => setView(item.id as any)}
-                    className={`relative px-6 py-2.5 text-[11px] font-medium uppercase tracking-[0.15em] transition-colors ${
+                    className={`hide-on-small relative flex-shrink-0 flex items-center justify-center px-4 sm:px-6 py-2.5 text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.15em] transition-colors ${
                       view === item.id
                         ? darkMode 
                           ? 'text-white' 
@@ -834,8 +837,8 @@ export default function App() {
                 ))}
               </nav>
               
-              {/* Theme Toggle */}
-              <div className="flex items-center gap-2" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+              {/* Right Area: Theme Toggle */}
+              <div className="w-32 flex-shrink-0 flex items-center justify-end gap-2" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
                 <motion.button
                   onClick={() => setShowLogoutConfirm(true)}
                   className={`w-6 h-6 rounded-md flex items-center justify-center transition-colors ${
@@ -873,7 +876,7 @@ export default function App() {
       )}
 
       {/* Main Content */}
-      <main className={isMinimized ? '' : 'pt-24 pb-32 px-12'}>
+      <main className={isMinimized ? '' : 'pt-24 pb-32 px-6 sm:px-12'}>
         <div className={isMinimized ? '' : 'max-w-[1400px] mx-auto'}>
           <AnimatePresence mode="wait">
             {view === 'focus' && (
@@ -914,7 +917,7 @@ export default function App() {
                   <div className="side-widget hidden lg:block w-[240px]" />
 
                   {/* Center - Main Task List */}
-                  <div className="w-full max-w-[680px] space-y-6 pb-32">
+                  <div className="w-full min-w-[320px] max-w-[680px] space-y-6 pb-32">
                     {/* Filter + Inline Stats */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -1048,8 +1051,8 @@ export default function App() {
                 </div>
 
                 {/* Fixed Bottom Action Bar */}
-                <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-full max-w-[680px] z-50 px-6 sm:px-0">
-                  <div className="flex flex-col gap-2">
+                <div className="fixed bottom-8 left-0 right-0 z-50 pointer-events-none flex justify-center px-6 sm:px-12">
+                  <div className="w-full min-w-[320px] max-w-[680px] pointer-events-auto flex flex-col gap-2">
                     <AnimatePresence>
                       {selectedTaskIds.length > 0 && (
                         <motion.button
