@@ -803,15 +803,15 @@ export default function App() {
               <nav className="flex-1 flex items-center justify-center gap-1 overflow-x-auto no-scrollbar" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
 
                 {[
-                  { id: 'focus', label: 'Focus' },
-                  { id: 'list', label: 'Plan' },
-                  { id: 'stats', label: 'Stats' },
-                  { id: 'history', label: 'History' },
+                  { id: 'focus', label: 'Focus', hideOnSmall: false },
+                  { id: 'list', label: 'Plan', hideOnSmall: false },
+                  { id: 'stats', label: 'Stats', hideOnSmall: true },
+                  { id: 'history', label: 'History', hideOnSmall: true },
                 ].map((item) => (
                   <motion.button
                     key={item.id}
                     onClick={() => setView(item.id as any)}
-                    className={`hide-on-small relative flex-shrink-0 flex items-center justify-center px-4 sm:px-6 py-2.5 text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.15em] transition-colors ${
+                    className={`${item.hideOnSmall ? 'hide-on-small' : ''} relative flex-shrink-0 flex items-center justify-center px-4 sm:px-6 py-2.5 text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.15em] transition-colors ${
                       view === item.id
                         ? darkMode 
                           ? 'text-white' 
