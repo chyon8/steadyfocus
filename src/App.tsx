@@ -129,10 +129,6 @@ export default function App() {
   const darkMode = theme === 'dark';
   const currentTheme = THEMES[theme];
 
-  // DEBUG: Track view state changes
-  useEffect(() => {
-    console.log('[DEBUG-VIEW] view state changed to:', view);
-  }, [view]);
 
   // Check for existing session and restore app state on mount
   useEffect(() => {
@@ -414,24 +410,6 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [view, currentTaskId, darkMode, isMinimized]);
 
-  // DEBUG: Global click listener to see what actually gets clicked
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      console.log('[DEBUG-CLICK] Clicked element:', {
-        tag: target.tagName,
-        className: target.className?.substring?.(0, 80),
-        text: target.textContent?.substring(0, 40),
-        id: target.id,
-        parentTag: target.parentElement?.tagName,
-        parentClass: target.parentElement?.className?.substring?.(0, 80),
-        x: e.clientX,
-        y: e.clientY,
-      });
-    };
-    document.addEventListener('click', handler, true); // capture phase
-    return () => document.removeEventListener('click', handler, true);
-  }, []);
 
   const getFilteredTasks = (taskList: Task[] = tasks) => {
     const now = new Date();
@@ -598,15 +576,12 @@ export default function App() {
   };
 
   const startTask = (id: string) => {
-    console.log('[DEBUG-3] startTask called with id:', id);
     setTasks(tasks.map(task => ({
       ...task,
       startedAt: task.id === id ? new Date() : undefined,
     })));
     setCurrentTaskId(id);
-    console.log('[DEBUG-4] calling setView(focus)');
     setView('focus');
-    console.log('[DEBUG-5] setView(focus) called successfully');
   };
 
   const updateTaskTime = (id: string, seconds: number) => {
@@ -687,13 +662,11 @@ export default function App() {
   };
 
   const startSelectedTasks = () => {
-    console.log('[DEBUG-3b] startSelectedTasks called, selectedTaskIds:', selectedTaskIds);
     if (selectedTaskIds.length === 0) return;
     
     // Set the first selected task as current
     setCurrentTaskId(selectedTaskIds[0]);
     setSelectedTaskIds([]); // Clear selection after starting
-    console.log('[DEBUG-4b] calling setView(focus) from startSelectedTasks');
     setView('focus');
   };
 
@@ -1123,7 +1096,6 @@ export default function App() {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  console.log('[DEBUG] Mark Done clicked');
                   completeSelectedTasks();
                 }}
                 style={{ height: '56px' }}
@@ -1142,12 +1114,10 @@ export default function App() {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  console.log('[DEBUG-1] Enter the Zone CLICKED!');
                   if (selectedTaskIds.length > 0) {
                     startSelectedTasks();
                   } else {
                     const firstTask = filter === 'all' ? tasks.filter(t => !t.completed)[0] : filteredTasks[0];
-                    console.log('[DEBUG-2] firstTask:', firstTask?.id, firstTask?.title);
                     if (firstTask) {
                       startTask(firstTask.id);
                     }
