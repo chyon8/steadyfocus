@@ -811,7 +811,7 @@ export default function App() {
                   <motion.button
                     key={item.id}
                     onClick={() => setView(item.id as any)}
-                    className={`${item.hideOnSmall ? 'hide-on-small' : ''} relative flex-shrink-0 flex items-center justify-center px-4 sm:px-6 py-2.5 text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.15em] transition-colors ${
+                    className={`select-none ${item.hideOnSmall ? 'hide-on-small' : ''} relative flex-shrink-0 flex items-center justify-center px-4 sm:px-6 py-2.5 text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.15em] transition-colors ${
                       view === item.id
                         ? darkMode 
                           ? 'text-white' 
@@ -925,7 +925,7 @@ export default function App() {
                           <motion.button
                             key={f}
                             onClick={() => setFilter(f)}
-                            className={`relative px-5 py-2 text-[10px] font-medium uppercase tracking-[0.15em] transition-colors ${
+                            className={`select-none relative px-5 py-2 text-[10px] font-medium uppercase tracking-[0.15em] transition-colors ${
                               filter === f
                                 ? darkMode ? 'text-black' : 'text-white'
                                 : darkMode ? 'text-white/30 hover:text-white/60' : 'text-black/30 hover:text-black/60'
