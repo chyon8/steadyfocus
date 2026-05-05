@@ -129,6 +129,11 @@ export default function App() {
   const darkMode = theme === 'dark';
   const currentTheme = THEMES[theme];
 
+  // DEBUG: Track view state changes
+  useEffect(() => {
+    console.log('[DEBUG-VIEW] view state changed to:', view);
+  }, [view]);
+
   // Check for existing session and restore app state on mount
   useEffect(() => {
     const checkSession = async () => {
@@ -409,6 +414,25 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [view, currentTaskId, darkMode, isMinimized]);
 
+  // DEBUG: Global click listener to see what actually gets clicked
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      console.log('[DEBUG-CLICK] Clicked element:', {
+        tag: target.tagName,
+        className: target.className?.substring?.(0, 80),
+        text: target.textContent?.substring(0, 40),
+        id: target.id,
+        parentTag: target.parentElement?.tagName,
+        parentClass: target.parentElement?.className?.substring?.(0, 80),
+        x: e.clientX,
+        y: e.clientY,
+      });
+    };
+    document.addEventListener('click', handler, true); // capture phase
+    return () => document.removeEventListener('click', handler, true);
+  }, []);
+
   const getFilteredTasks = (taskList: Task[] = tasks) => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -574,12 +598,15 @@ export default function App() {
   };
 
   const startTask = (id: string) => {
+    console.log('[DEBUG-3] startTask called with id:', id);
     setTasks(tasks.map(task => ({
       ...task,
       startedAt: task.id === id ? new Date() : undefined,
     })));
     setCurrentTaskId(id);
+    console.log('[DEBUG-4] calling setView(focus)');
     setView('focus');
+    console.log('[DEBUG-5] setView(focus) called successfully');
   };
 
   const updateTaskTime = (id: string, seconds: number) => {
@@ -660,11 +687,13 @@ export default function App() {
   };
 
   const startSelectedTasks = () => {
+    console.log('[DEBUG-3b] startSelectedTasks called, selectedTaskIds:', selectedTaskIds);
     if (selectedTaskIds.length === 0) return;
     
     // Set the first selected task as current
     setCurrentTaskId(selectedTaskIds[0]);
     setSelectedTaskIds([]); // Clear selection after starting
+    console.log('[DEBUG-4b] calling setView(focus) from startSelectedTasks');
     setView('focus');
   };
 
@@ -1050,59 +1079,6 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Fixed Bottom Action Bar */}
-                <div className="fixed bottom-8 left-0 right-0 z-50 pointer-events-none flex justify-center px-6 sm:px-12">
-                  <div className="w-full min-w-[320px] max-w-[680px] pointer-events-auto flex flex-col gap-2">
-                    <AnimatePresence>
-                      {selectedTaskIds.length > 0 && (
-                        <motion.button
-                          key="mark-done"
-                          onClick={completeSelectedTasks}
-                          initial={{ opacity: 0, y: 10, height: 0 }}
-                          animate={{ opacity: 1, y: 0, height: 56 }}
-                          exit={{ opacity: 0, y: 10, height: 0 }}
-                          whileHover={{ scale: 1.01, y: -2 }}
-                          whileTap={{ scale: 0.99 }}
-                          className={`w-full rounded-xl font-medium uppercase tracking-[0.15em] text-sm flex items-center justify-center gap-3 transition-colors shadow-lg overflow-hidden ${
-                            darkMode
-                              ? 'bg-[#161618] text-green-400 hover:bg-[#1c1c1e] border border-green-500/30'
-                              : 'bg-white text-green-600 hover:bg-gray-50 border border-green-500/20'
-                          }`}
-                        >
-                          <CheckCircle2 className="w-5 h-5" />
-                          Mark {selectedTaskIds.length} Done
-                        </motion.button>
-                      )}
-                    </AnimatePresence>
-
-                    {((filter === 'all' ? tasks.filter(t => !t.completed).length : filteredTasks.length) > 0 || selectedTaskIds.length > 0) && (
-                      <motion.button
-                        onClick={() => {
-                          if (selectedTaskIds.length > 0) {
-                            startSelectedTasks();
-                          } else {
-                            const firstTask = filter === 'all' ? tasks.filter(t => !t.completed)[0] : filteredTasks[0];
-                            if (firstTask) {
-                              startTask(firstTask.id);
-                            }
-                          }
-                        }}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        whileHover={{ scale: 1.01, y: -2 }}
-                        whileTap={{ scale: 0.99 }}
-                        className={`w-full h-16 rounded-xl font-medium uppercase tracking-[0.15em] text-sm flex items-center justify-center gap-3 transition-colors shadow-2xl ${
-                          darkMode
-                            ? 'bg-white text-black hover:bg-white/95'
-                            : 'bg-black text-white hover:bg-black/95'
-                        }`}
-                      >
-                        <Zap className="w-5 h-5" fill="currentColor" />
-                        {selectedTaskIds.length > 0 ? `Start ${selectedTaskIds.length} Selected` : 'Enter the zone'}
-                      </motion.button>
-                    )}
-                  </div>
-                </div>
               </motion.div>
             )}
 
@@ -1136,7 +1112,61 @@ export default function App() {
             )}
           </AnimatePresence>
         </div>
+
       </main>
+
+      {/* Fixed Bottom Action Bar - OUTSIDE main to avoid any stacking/transform issues */}
+      {view === 'list' && !isMinimized && (
+        <div style={{ position: 'fixed', bottom: '2rem', left: 0, right: 0, zIndex: 9999, pointerEvents: 'none', display: 'flex', justifyContent: 'center', padding: '0 1.5rem' }}>
+          <div style={{ width: '100%', minWidth: '320px', maxWidth: '680px', pointerEvents: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {selectedTaskIds.length > 0 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  console.log('[DEBUG] Mark Done clicked');
+                  completeSelectedTasks();
+                }}
+                style={{ height: '56px' }}
+                className={`w-full rounded-xl font-medium uppercase tracking-[0.15em] text-sm flex items-center justify-center gap-3 transition-colors shadow-lg ${
+                  darkMode
+                    ? 'bg-[#161618] text-green-400 hover:bg-[#1c1c1e] border border-green-500/30'
+                    : 'bg-white text-green-600 hover:bg-gray-50 border border-green-500/20'
+                }`}
+              >
+                <CheckCircle2 className="w-5 h-5" />
+                Mark {selectedTaskIds.length} Done
+              </button>
+            )}
+
+            {((filter === 'all' ? tasks.filter(t => !t.completed).length : filteredTasks.length) > 0 || selectedTaskIds.length > 0) && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  console.log('[DEBUG-1] Enter the Zone CLICKED!');
+                  if (selectedTaskIds.length > 0) {
+                    startSelectedTasks();
+                  } else {
+                    const firstTask = filter === 'all' ? tasks.filter(t => !t.completed)[0] : filteredTasks[0];
+                    console.log('[DEBUG-2] firstTask:', firstTask?.id, firstTask?.title);
+                    if (firstTask) {
+                      startTask(firstTask.id);
+                    }
+                  }
+                }}
+                className={`w-full h-16 rounded-xl font-medium uppercase tracking-[0.15em] text-sm flex items-center justify-center gap-3 transition-colors shadow-2xl cursor-pointer ${
+                  darkMode
+                    ? 'bg-white text-black hover:bg-white/95'
+                    : 'bg-black text-white hover:bg-black/95'
+                }`}
+              >
+                <Zap className="w-5 h-5" fill="currentColor" />
+                {selectedTaskIds.length > 0 ? `Start ${selectedTaskIds.length} Selected` : 'Enter the zone'}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
 
       {/* Footer Hints (Removed as they are now in the sidebar) */}
 

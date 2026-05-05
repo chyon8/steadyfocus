@@ -83,7 +83,7 @@ export function TaskList({ tasks, currentTaskId, onComplete, onDelete, onStart, 
             items={tasks.map(t => t.id)}
             strategy={verticalListSortingStrategy}
           >
-            <AnimatePresence mode="popLayout">
+            <AnimatePresence mode="sync">
               {tasks.map((task, index) => (
                 <TaskItem
                   key={task.id}
